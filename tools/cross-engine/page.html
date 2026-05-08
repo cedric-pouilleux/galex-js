@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Cross-engine determinism harness</title>
+</head>
+<body>
+  <pre id="result">running…</pre>
+  <script type="module">
+    // Inline HTML script — Vite resolves .ts directly here (the .js → .ts
+    // bundler resolution rule applies to .ts/.vue source files, not to
+    // html-proxy modules). Importing the .ts directly keeps it working in
+    // both dev and Playwright.
+    import { createGalaxyData } from '../../core/GalaxyData.ts';
+
+    const OPTS = {
+      seed: 42,
+      count: 2000,
+      radius: 50,
+      innerRadius: 4.5,
+      thickness: 0,
+      arms: 6,
+      spin: 0.9,
+      spread: 0.95,
+      fieldRatio: 0.3,
+      minDistance: 0.25,
+      fillCenter: false,
+    };
+
+    const g = createGalaxyData(OPTS).data;
+
+    function hashFloat32(arr) {
+      const view = new DataView(arr.buffer, arr.byteOffset, arr.byteLength);
+      let h = 0x811c9dc5;
+      for (let i = 0; i < arr.length; i++) {
+        const u32 = view.getUint32(i * 4, true);
+        h = Math.imul(h ^ (u32 & 0xff), 0x01000193) >>> 0;
+        h = Math.imul(h ^ ((u32 >>> 8) & 0xff), 0x01000193) >>> 0;
+        h = Math.imul(h ^ ((u32 >>> 16) & 0xff), 0x01000193) >>> 0;
+        h = Math.imul(h ^ ((u32 >>> 24) & 0xff), 0x01000193) >>> 0;
+      }
+      return h >>> 0;
+    }
+
+    const hashes = {
+      positions: hashFloat32(g.positions).toString(16).padStart(8, '0'),
+      colors:    hashFloat32(g.colors).toString(16).padStart(8, '0'),
+      sizes:     hashFloat32(g.sizes).toString(16).padStart(8, '0'),
+    };
+
+    document.getElementById('result').textContent = JSON.stringify(hashes, null, 2);
+    window.__crossEngineHashes = hashes;
+  </script>
+</body>
+</html>

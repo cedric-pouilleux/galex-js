@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stellex — Galaxy Sandbox</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <canvas id="view"></canvas>
+
+  <div id="hud">
+    <div class="title">STELLEX · Galaxy Sandbox</div>
+    <div class="row"><span>FPS</span><b id="fps">—</b></div>
+    <div class="row"><span>Mode</span><b id="modeLabel">orbite</b></div>
+    <div class="row"><span>Seed</span><b id="seedValue" class="seed-clickable" title="Cliquer pour copier l'URL">—</b></div>
+
+    <div class="sep"></div>
+    <div class="row"><span>Étoiles</span><b id="starCount">—</b></div>
+    <div class="row"><span>Cubes (grille)</span><b id="cubeCount">—</b></div>
+    <div class="row"><span>Cubes peuplés</span><b id="cubePopulated">—</b></div>
+
+    <div class="sep"></div>
+    <div class="row"><span>Planète joueur</span><b id="playerName">—</b></div>
+    <div class="row"><span>Cube joueur</span><b id="playerCube">—</b></div>
+
+    <div class="sep"></div>
+    <div class="row"><span>Cube survolé</span><b id="hoverCube">—</b></div>
+    <div class="row"><span>Étoiles</span><b id="hoverStars">—</b></div>
+
+    <div class="sep"></div>
+    <div class="row"><span>Étoile survolée</span><b id="starName">—</b></div>
+
+    <div class="sep"></div>
+    <label class="toggle">
+      <input type="checkbox" id="toggleGrid" checked />
+      <span>Afficher la grille</span>
+    </label>
+    <label class="toggle">
+      <input type="checkbox" id="toggleFog" />
+      <span>Brouillard de guerre</span>
+    </label>
+    <label class="toggle">
+      <input type="checkbox" id="togglePlanView" />
+      <span>Vue plateau 2D</span>
+    </label>
+    <div id="fogRangeRow" class="range-row">
+      <span class="range-label">Rayon</span>
+      <input type="range" id="fogRange" min="1" max="30" value="2" step="1" />
+      <span id="fogRangeValue" class="range-value">2</span>
+    </div>
+
+    <div class="sep"></div>
+    <details id="genPanel">
+      <summary>Génération</summary>
+      <div class="gen-row">
+        <label for="genCount">Étoiles</label>
+        <input type="range" id="genCount" min="1000" max="50000" step="500" value="15000" />
+        <span class="gen-value" id="genCountValue">15 000</span>
+      </div>
+      <div class="gen-row">
+        <label for="genArms">Bras</label>
+        <input type="range" id="genArms" min="2" max="8" step="1" value="6" />
+        <span class="gen-value" id="genArmsValue">6</span>
+      </div>
+      <div class="gen-row">
+        <label for="genInner">Centre vide</label>
+        <input type="range" id="genInner" min="1" max="20" step="0.5" value="4.5" />
+        <span class="gen-value" id="genInnerValue">4.5</span>
+      </div>
+      <div class="gen-row">
+        <label for="genRadius">Rayon</label>
+        <input type="range" id="genRadius" min="30" max="100" step="1" value="50" />
+        <span class="gen-value" id="genRadiusValue">50</span>
+      </div>
+      <div class="gen-row">
+        <label for="genSpin">Enroulement</label>
+        <input type="range" id="genSpin" min="0.3" max="2.0" step="0.05" value="0.9" />
+        <span class="gen-value" id="genSpinValue">0.90</span>
+      </div>
+      <div class="gen-row">
+        <label for="genSpread">Étalement</label>
+        <input type="range" id="genSpread" min="0.3" max="2.0" step="0.05" value="0.95" />
+        <span class="gen-value" id="genSpreadValue">0.95</span>
+      </div>
+      <div class="gen-row">
+        <label for="genField">Hors bras</label>
+        <input type="range" id="genField" min="0" max="80" step="2" value="30" />
+        <span class="gen-value" id="genFieldValue">30 %</span>
+      </div>
+      <div class="gen-row">
+        <label for="genGas">Densité gaz</label>
+        <input type="range" id="genGas" min="0" max="2.0" step="0.05" value="1.0" />
+        <span class="gen-value" id="genGasValue">1.00</span>
+      </div>
+      <label class="toggle gen-toggle">
+        <input type="checkbox" id="genFillCenter" />
+        <span>Centre rempli d'étoiles</span>
+      </label>
+      <div class="gen-actions">
+        <button type="button" id="genRebuild" class="gen-btn primary">Régénérer</button>
+        <button type="button" id="genRandomSeed" class="gen-btn">Seed aléatoire</button>
+      </div>
+      <div class="gen-status" id="genStatus"></div>
+    </details>
+  </div>
+
+  <div id="legend">
+    <kbd>survol</kbd> inspecter
+    <kbd>clic</kbd> zoomer sur un cube
+    <kbd>esc</kbd> revenir
+    <kbd>clic + glisser</kbd> orbite
+    <kbd>molette</kbd> zoom
+  </div>
+
+  <div id="starTooltip"></div>
+
+  <script type="module" src="./playground/Main.ts"></script>
+</body>
+</html>
