@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import type { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { createCubeWireframe } from '../view/GridHelper.js';
 import type { GalaxyData } from '../core/GalaxyData.js';
 import type { Cube } from '../core/CubeGrid.js';
 import type { GalaxyScene } from '../view/GalaxyScene.js';
@@ -31,7 +30,6 @@ export type Closeup = {
 type ActiveState = {
   cube: Cube;
   field: CloseupField | null;
-  wire: THREE.Object3D;
   savedCamPos: THREE.Vector3;
   savedTarget: THREE.Vector3;
   savedMin: number;
@@ -70,12 +68,6 @@ export function createCloseup({
     const { cubeSize } = galaxyData.opts;
     const center = galaxyData.grid.cubeToWorldCenter(cube.i, cube.j, cube.k);
 
-    const wire = createCubeWireframe(cubeSize, 0x6cf2ff);
-    (wire.material as THREE.Material).opacity = 0;
-    wire.visible = false;
-    wire.position.set(center.x, center.y, center.z);
-    galaxyScene.object3D.add(wire);
-
     const field = prepareCloseupField(cube, galaxyData, highlight);
     if (field) galaxyScene.object3D.add(field.points);
 
@@ -106,7 +98,7 @@ export function createCloseup({
     galaxyScene.object3D.add(hoverRing.object);
     hoverRing.hide();
 
-    active = { cube, field, wire, savedCamPos, savedTarget, savedMin, savedMax };
+    active = { cube, field, savedCamPos, savedTarget, savedMin, savedMax };
   }
 
   function exit({ instant = false }: { instant?: boolean } = {}): void {
@@ -118,11 +110,6 @@ export function createCloseup({
       a.field.points.geometry.dispose();
       (a.field.points.material as THREE.Material).dispose();
     }
-
-    galaxyScene.object3D.remove(a.wire);
-    const wireMesh = a.wire as THREE.Mesh;
-    if (wireMesh.geometry) wireMesh.geometry.dispose();
-    if (wireMesh.material) (wireMesh.material as THREE.Material).dispose();
 
     controls.minDistance = a.savedMin;
     controls.maxDistance = a.savedMax;

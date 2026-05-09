@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createVisibilityFieldLines } from '../view/GridHelper.js';
+import { disposeObject3DTree } from '../view/Dispose.js';
 import type { GalaxyData } from '../core/GalaxyData.js';
 import type { Cube } from '../core/CubeGrid.js';
 import type { GalaxyScene } from '../view/GalaxyScene.js';
@@ -39,6 +40,8 @@ export type Fog = {
   disposeGrid(galaxyScene: GalaxyScene): void;
 };
 
+const DEFAULT_FOG_RANGE = 2;
+
 /**
  * Visibility-field state machine for the playground. Owns the wireframe grid
  * around the player + the camera tween that focuses on the player on enable.
@@ -50,13 +53,12 @@ export type Fog = {
 export function createFog(): Fog {
   const state = {
     active: false,
-    range: 2,
+    range: DEFAULT_FOG_RANGE,
     grid: null as THREE.Group | null,
   };
 
   function enable(world: FogWorld, cameras: FogCameras, planViewActive: boolean): void {
     state.active = true;
-    fog.active = true;
     world.galaxyScene.setHaloVisible(false);
     world.occupiedLines.visible = false;
     cameras.perspectiveControls.enablePan = false;
@@ -68,7 +70,6 @@ export function createFog(): Fog {
 
   function disable(world: FogWorld, cameras: FogCameras, occupiedLinesVisibleAfter: boolean): void {
     state.active = false;
-    fog.active = false;
     world.galaxyScene.setVisibilityField(null);
     world.galaxyScene.setHaloVisible(true);
     world.occupiedLines.visible = occupiedLinesVisibleAfter;
@@ -116,11 +117,7 @@ export function createFog(): Fog {
   function disposeGrid(galaxyScene: GalaxyScene): void {
     if (!state.grid) return;
     galaxyScene.object3D.remove(state.grid);
-    state.grid.traverse((o) => {
-      const mesh = o as THREE.Mesh;
-      if (mesh.geometry) mesh.geometry.dispose();
-      if (mesh.material) (mesh.material as THREE.Material).dispose();
-    });
+    disposeObject3DTree(state.grid);
     state.grid = null;
   }
 
@@ -153,9 +150,14 @@ export function createFog(): Fog {
     tick();
   }
 
-  const fog: Fog = {
-    active: false,
-    range: 2,
+  // `active` and `range` are exposed as live getters/setters so the host can
+  // read/write them like fields while the closure-local `state` stays the
+  // single source of truth.
+  return {
+    get active() { return state.active; },
+    set active(v: boolean) { state.active = v; },
+    get range() { return state.range; },
+    set range(v: number) { state.range = v; },
     enable,
     disable,
     rebuild,
@@ -164,11 +166,4 @@ export function createFog(): Fog {
     setGridVisible,
     disposeGrid,
   };
-  // Keep the internal range mirrored when the host writes fog.range.
-  Object.defineProperty(fog, 'range', {
-    get: () => state.range,
-    set: (v: number) => { state.range = v; },
-    enumerable: true,
-  });
-  return fog;
 }

@@ -1,3 +1,5 @@
+import { cubeKey } from './CubeGrid.js';
+
 /** Cube coordinate on a flat grid (j is optional, ignored when omitted). */
 export type CubeCoord = {
   i: number;
@@ -93,7 +95,7 @@ export function tierMapForVisibilityField(
         const k = focal.k + dk;
         if (!cubeExists(i, j, k)) continue;
         const tier: 0 | 1 = d2 <= innerSq ? 0 : 1;
-        const key = `${i}|${j}|${k}`;
+        const key = cubeKey(i, j, k);
         const existing = tiers.get(key);
         if (existing === undefined || tier < existing) {
           tiers.set(key, tier);

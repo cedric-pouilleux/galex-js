@@ -100,9 +100,6 @@ for (const [zone, forbidden] of Object.entries(HIERARCHY)) {
   for (const file of sources) {
     errors.push(...scan(file, regex, `forbidden upstream import — ${zone}/ cannot depend on ${forbidden.join(', ')}/`));
   }
-  // Reset .lastIndex for safety — `scan` does it already, but the regex is
-  // shared across files in the loop above.
-  regex.lastIndex = 0;
 }
 
 if (errors.length > 0) {

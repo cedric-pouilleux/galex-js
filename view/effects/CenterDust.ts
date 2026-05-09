@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { resolveArmCadence } from './ArmCadence.js';
+import { resolveArmCadence, writeSpiralTangent } from './ArmCadence.js';
 import type { ArmLayerOptions } from './ArmCadence.js';
 import {
   HALO_VERT, CENTER_DISC_FRAG, STRETCH_VERT, STRETCH_FRAG, createPointsMaterialDef,
@@ -73,13 +73,7 @@ export function buildCenterDustBuffers({
     positions[n * 3 + 1] = (rng() - 0.5) * 0.5;
     positions[n * 3 + 2] = r * Math.sin(theta);
 
-    // Spiral tangent for stretched particles.
-    const dThetaDr = (Math.PI * 2 * spin * spinJ[arm]) / radius;
-    const dposX = Math.cos(theta) - r * Math.sin(theta) * dThetaDr;
-    const dposZ = Math.sin(theta) + r * Math.cos(theta) * dThetaDr;
-    const dposLen = Math.hypot(dposX, dposZ) || 1;
-    tangents[n * 2 + 0] = dposX / dposLen;
-    tangents[n * 2 + 1] = dposZ / dposLen;
+    writeSpiralTangent(tangents, n, arm, r, theta, radius, spin, spinJ);
     // The further out, the more likely we get stretched trails (smooth
     // transition into the gas-streak wisps).
     stretches[n] = rng() < 0.25 + 0.4 * t ? 0.5 + rng() * 0.4 : 0;

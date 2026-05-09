@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress';
+import { templateCompilerOptions } from '@tresjs/core';
 
 export default defineConfig({
   title: 'Stellex Galaxy',
@@ -7,10 +8,16 @@ export default defineConfig({
   base: '/',
   cleanUrls: true,
 
+  // Forwarded to @vitejs/plugin-vue. TresJS uses a custom-element whitelist so
+  // `<TresPoints>`, `<TresMesh>` etc. compile to its own resolver while real
+  // Vue components like `<TresCanvas>` go through the normal pipeline.
+  vue: templateCompilerOptions,
+
   themeConfig: {
     nav: [
       { text: 'Accueil', link: '/' },
       { text: 'Quick start', link: '/quick-start' },
+      { text: 'Galerie', link: '/examples/' },
       { text: 'Architecture', link: '/architecture/' },
       { text: 'API', link: '/api/' },
       { text: 'Compatibilité', link: '/compatibility/' },
@@ -53,6 +60,17 @@ export default defineConfig({
           text: 'Intégrations',
           items: [
             { text: 'Vue / TresJS', link: '/integrations/vue-tres' },
+          ],
+        },
+      ],
+      '/examples/': [
+        {
+          text: 'Galerie',
+          items: [
+            { text: 'Vue d\'ensemble', link: '/examples/' },
+            { text: 'Variations d\'options', link: '/examples/options' },
+            { text: 'Modes de vue', link: '/examples/views' },
+            { text: 'Primitives en action', link: '/examples/primitives' },
           ],
         },
       ],

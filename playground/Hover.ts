@@ -53,7 +53,7 @@ export function updateOrbitHover(ctx: OrbitHoverContext): void {
   hoverWire.position.set(center.x, center.y, center.z);
   hoverWire.visible = true;
   hoverLabel.visible = true;
-  setLabel(hoverLabel, i, j, k, count);
+  setLabel(hoverLabel, i, k, count);
   hud.setHover({ i, k, count });
 }
 

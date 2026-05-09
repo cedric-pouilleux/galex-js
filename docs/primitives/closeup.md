@@ -76,6 +76,87 @@ const field = prepareCloseupField(homeCube, galaxyData, {
 
 Aucun concept *player* dans la lib — le caller compose le sens.
 
+## Hover ring branché sur le raycaster
+
+Le hover ring exposé par `createHoverRing` est purement visuel : c'est au caller de raycaster les `THREE.Points` et d'appeler `showOn / hide`. Pour que le hit-testing fonctionne sur des sprites, on règle `raycaster.params.Points.threshold` proportionnellement à la taille moyenne d'étoile.
+
+::: code-group
+
+```ts [Vanilla Three]
+import { prepareCloseupField } from 'stellex-galaxy-sandbox/view/closeup/Buffers';
+import { createHoverRing } from 'stellex-galaxy-sandbox/view/closeup/HoverRing';
+
+const field = prepareCloseupField(cube, galaxyData);
+if (!field) throw new Error('empty cube');
+galaxyScene.object3D.add(field.points);
+
+const hoverRing = createHoverRing();
+galaxyScene.object3D.add(hoverRing.object);
+
+const raycaster = new THREE.Raycaster();
+raycaster.params.Points = { threshold: 0.3 };   // tune to sprite radius
+const ndc = new THREE.Vector2();
+
+renderer.domElement.addEventListener('pointermove', (ev) => {
+  const rect = renderer.domElement.getBoundingClientRect();
+  ndc.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+  ndc.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(ndc, camera);
+  const hits = raycaster.intersectObject(field.points, false);
+  if (hits.length === 0) return hoverRing.hide();
+
+  const starIndex = hits[0].index!;
+  hoverRing.showOn(field.points, starIndex, camera, field.temps[starIndex]);
+});
+```
+
+```vue [Vue / TresJS]
+<script setup lang="ts">
+import { onMounted, onBeforeUnmount, shallowRef } from 'vue';
+import * as THREE from 'three';
+import { useTresContext } from '@tresjs/core';
+import { prepareCloseupField } from 'stellex-galaxy-sandbox/view/closeup/Buffers';
+import { createHoverRing } from 'stellex-galaxy-sandbox/view/closeup/HoverRing';
+
+const props = defineProps<{ cube: Cube }>();
+const { camera, renderer } = useTresContext();
+
+const field = shallowRef(prepareCloseupField(props.cube, galaxyData));
+const hoverRing = createHoverRing();
+
+const raycaster = new THREE.Raycaster();
+raycaster.params.Points = { threshold: 0.3 };
+const ndc = new THREE.Vector2();
+
+function onPointerMove(ev: PointerEvent) {
+  const dom = renderer.value!.domElement;
+  const rect = dom.getBoundingClientRect();
+  ndc.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+  ndc.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(ndc, camera.value!);
+  const f = field.value;
+  if (!f) return;
+  const hits = raycaster.intersectObject(f.points, false);
+  if (hits.length === 0) return hoverRing.hide();
+
+  const idx = hits[0].index!;
+  hoverRing.showOn(f.points, idx, camera.value!, f.temps[idx]);
+}
+
+onMounted(() => renderer.value!.domElement.addEventListener('pointermove', onPointerMove));
+onBeforeUnmount(() => renderer.value!.domElement.removeEventListener('pointermove', onPointerMove));
+</script>
+
+<template>
+  <TresPrimitive v-if="field" :object="field.points" />
+  <TresPrimitive :object="hoverRing.object" />
+</template>
+```
+
+:::
+
 ## Orchestration côté caller
 
 Le tween caméra, le dim global, le plan de clipping et la gestion d'état `isActive` ne sont **pas** dans la lib : ils dépendent du système caméra du jeu, de sa courbe d'animation, de sa logique de visibilité.
@@ -107,6 +188,61 @@ function enter(cube: Cube, highlight: CloseupHighlight | null) {
 ```
 
 À la sortie : symétrique. `setDimming(1.0)`, `setClipping(false)`, dispose du `field.points`.
+
+### Cleanup symétrique
+
+Le sous-buffer du close-up alloue ses propres `BufferGeometry` + `ShaderMaterial`. Si tu rebuild le field (changement de cube, exit du close-up) sans dispose, ça fuit en GPU.
+
+::: code-group
+
+```ts [Vanilla Three]
+import type { CloseupField } from 'stellex-galaxy-sandbox/view/closeup/Buffers';
+
+let active: CloseupField | null = null;
+
+function exit() {
+  if (active) {
+    galaxyScene.object3D.remove(active.points);
+    active.points.geometry.dispose();
+    (active.points.material as THREE.ShaderMaterial).dispose();
+    active = null;
+  }
+  galaxyScene.setDimming(1.0);
+  galaxyScene.setClipping(false);
+}
+```
+
+```vue [Vue / TresJS]
+<script setup lang="ts">
+import { watch, onBeforeUnmount, shallowRef } from 'vue';
+import * as THREE from 'three';
+import { prepareCloseupField } from 'stellex-galaxy-sandbox/view/closeup/Buffers';
+import type { CloseupField } from 'stellex-galaxy-sandbox/view/closeup/Buffers';
+
+const props = defineProps<{ cube: Cube | null }>();
+const field = shallowRef<CloseupField | null>(null);
+
+// Dispose previous field on every cube swap to free GPU resources.
+function disposeField(f: CloseupField | null) {
+  if (!f) return;
+  f.points.geometry.dispose();
+  (f.points.material as THREE.ShaderMaterial).dispose();
+}
+
+watch(() => props.cube, (cube, _prev, onCleanup) => {
+  field.value = cube ? prepareCloseupField(cube, galaxyData) : null;
+  onCleanup(() => disposeField(field.value));
+}, { immediate: true });
+
+onBeforeUnmount(() => disposeField(field.value));
+</script>
+
+<template>
+  <TresPrimitive v-if="field" :object="field.points" />
+</template>
+```
+
+:::
 
 ## Pourquoi ce découplage ?
 

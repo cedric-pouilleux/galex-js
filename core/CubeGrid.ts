@@ -2,6 +2,11 @@ export type Vec3 = { x: number; y: number; z: number };
 export type CubeCoord3 = { i: number; j: number; k: number };
 export type Cube = CubeCoord3 & { starIndices: number[] };
 
+/** Canonical string key for a cube triple — used everywhere a `(i, j, k)` map needs a key. */
+export function cubeKey(i: number, j: number, k: number): string {
+  return `${i}|${j}|${k}`;
+}
+
 export type CubeGridOptions = {
   cubeSize?: number;
   origin?: Vec3;
@@ -25,7 +30,6 @@ export type CubeGrid = {
 
 export function createCubeGrid({ cubeSize = 2, origin = { x: 0, y: 0, z: 0 } }: CubeGridOptions = {}): CubeGrid {
   const cubes = new Map<string, Cube>();
-  const keyOf = (i: number, j: number, k: number) => `${i}|${j}|${k}`;
 
   function worldToCube(x: number, y: number, z: number): CubeCoord3 {
     return {
@@ -51,7 +55,7 @@ export function createCubeGrid({ cubeSize = 2, origin = { x: 0, y: 0, z: 0 } }: 
       const y = positions[s * 3 + 1];
       const z = positions[s * 3 + 2];
       const { i, j, k } = worldToCube(x, y, z);
-      const key = keyOf(i, j, k);
+      const key = cubeKey(i, j, k);
       let c = cubes.get(key);
       if (!c) {
         c = { i, j, k, starIndices: [] };
@@ -63,7 +67,7 @@ export function createCubeGrid({ cubeSize = 2, origin = { x: 0, y: 0, z: 0 } }: 
   }
 
   function get(i: number, j: number, k: number): Cube | undefined {
-    return cubes.get(keyOf(i, j, k));
+    return cubes.get(cubeKey(i, j, k));
   }
 
   function size(): number {
@@ -71,7 +75,7 @@ export function createCubeGrid({ cubeSize = 2, origin = { x: 0, y: 0, z: 0 } }: 
   }
 
   function remove(i: number, j: number, k: number): boolean {
-    return cubes.delete(keyOf(i, j, k));
+    return cubes.delete(cubeKey(i, j, k));
   }
 
   function fillDisk({ radius, j = 0 }: { radius: number; j?: number }): void {
@@ -86,7 +90,7 @@ export function createCubeGrid({ cubeSize = 2, origin = { x: 0, y: 0, z: 0 } }: 
         const cx = origin.x + (i + 0.5) * cubeSize;
         const cz = origin.z + (k + 0.5) * cubeSize;
         if (cx * cx + cz * cz > r2) continue;
-        const key = keyOf(i, j, k);
+        const key = cubeKey(i, j, k);
         if (!cubes.has(key)) {
           cubes.set(key, { i, j, k, starIndices: [] });
         }
@@ -142,7 +146,7 @@ export function createCubeGrid({ cubeSize = 2, origin = { x: 0, y: 0, z: 0 } }: 
 
     let t = 0;
     for (let n = 0; n < maxSteps; n++) {
-      const cube = cubes.get(keyOf(i, j, k));
+      const cube = cubes.get(cubeKey(i, j, k));
       if (cube) return cube;
 
       if (tMaxX < tMaxY && tMaxX < tMaxZ) {

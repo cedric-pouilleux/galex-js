@@ -49,26 +49,27 @@ export type GalaxyData = {
  * `data` buffers across V8, SpiderMonkey and JavaScriptCore.
  */
 export function createGalaxyData(opts: GalaxyDataOptions = {}): GalaxyData {
-  const resolved: ResolvedGalaxyOptions = {
-    count: 15000,
-    radius: 50,
-    cubeSize: 2,
-    innerRadius: 4.5,
-    minDistance: 0.25,
-    seed: null,
-    arms: 6,
-    spin: 0.9,
-    spread: 0.95,
-    fieldRatio: 0.30,
-    fillCenter: false,
-    thickness: 0,
-    ...opts,
-  };
-  // thickness defaults to cubeSize (after the spread, both are settled).
-  if (opts.thickness === undefined) resolved.thickness = resolved.cubeSize;
+  // thickness defaults to cubeSize so a flat galaxy stays inside one cube
+  // layer on the y axis without the caller having to wire the dependency.
+  const cubeSize = opts.cubeSize ?? 2;
+  const thickness = opts.thickness ?? cubeSize;
   // Math.sqrt is IEEE-correct since ES2017 → bit-stable across engines.
-  const minInner = Math.sqrt(2) * 1.5 * resolved.cubeSize + 0.05;
-  if (resolved.innerRadius < minInner) resolved.innerRadius = minInner;
+  const innerRadiusFloor = Math.sqrt(2) * 1.5 * cubeSize + 0.05;
+
+  const resolved: ResolvedGalaxyOptions = {
+    count:       opts.count       ?? 15000,
+    radius:      opts.radius      ?? 50,
+    cubeSize,
+    innerRadius: Math.max(opts.innerRadius ?? 4.5, innerRadiusFloor),
+    minDistance: opts.minDistance ?? 0.25,
+    seed:        opts.seed        ?? null,
+    arms:        opts.arms        ?? 6,
+    spin:        opts.spin        ?? 0.9,
+    spread:      opts.spread      ?? 0.95,
+    fieldRatio:  opts.fieldRatio  ?? 0.30,
+    fillCenter:  opts.fillCenter  ?? false,
+    thickness,
+  };
 
   const seed = (resolved.seed === null || resolved.seed === undefined)
     ? pickSeed()
@@ -77,7 +78,7 @@ export function createGalaxyData(opts: GalaxyDataOptions = {}): GalaxyData {
   const armParamsRng = mulberry32(deriveSubseed(seed, 'arm-params'));
   const starsRng     = mulberry32(deriveSubseed(seed, 'stars'));
 
-  const { count, radius, thickness, cubeSize, innerRadius, minDistance,
+  const { count, radius, innerRadius, minDistance,
           arms, spin, spread, fieldRatio, fillCenter } = resolved;
 
   const armSpinJ: number[] = new Array(arms);

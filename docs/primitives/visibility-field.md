@@ -98,6 +98,71 @@ Wireframe à 2 niveaux d'opacité sur les cubes couverts. Inner cubes (tier 0) o
 
 À utiliser conjointement avec `setVisibilityField` pour matcher visuellement le contour de la zone visible.
 
+### Exemple — wireframe + champ synchronisés
+
+Le wireframe est statique : il faut le re-builder dès que `focals` ou `range` change. Pattern : on dispose l'ancien `Group`, on attache le nouveau, et on appelle `setVisibilityField` avec **la même config** pour que les particules suivent.
+
+::: code-group
+
+```ts [Vanilla Three]
+import { createVisibilityFieldLines } from 'stellex-galaxy-sandbox/view/GridHelper';
+
+let fieldLines: THREE.Group | null = null;
+
+function applyFog(focals: { i: number; k: number }[], range = 3) {
+  // Remove previous wireframe.
+  if (fieldLines) {
+    galaxyScene.object3D.remove(fieldLines);
+    fieldLines.traverse((o) => {
+      const seg = o as THREE.LineSegments;
+      seg.geometry?.dispose();
+      (seg.material as THREE.Material | undefined)?.dispose();
+    });
+  }
+
+  // Rebuild wireframe + push the same config to the per-particle field.
+  fieldLines = createVisibilityFieldLines(galaxy.grid, focals, { range });
+  galaxyScene.object3D.add(fieldLines);
+  galaxyScene.setVisibilityField({ focals, range, fadedOpacity: 0.18 });
+}
+```
+
+```vue [Vue / TresJS]
+<script setup lang="ts">
+import { computed, watch, shallowRef } from 'vue';
+import { createVisibilityFieldLines } from 'stellex-galaxy-sandbox/view/GridHelper';
+import { useGalaxyView } from 'stellex-galaxy-sandbox/view-vue';
+
+const props = defineProps<{
+  focals: { i: number; k: number }[];
+  range: number;
+}>();
+
+const view = useGalaxyView(galaxy);
+
+// Rebuild the wireframe Group whenever focals/range change.
+const lines = shallowRef<THREE.Group | null>(null);
+watch(
+  () => [props.focals, props.range] as const,
+  ([focals, range]) => {
+    lines.value = createVisibilityFieldLines(galaxy.grid, focals, { range });
+    view.visibilityField.value = { focals, range, fadedOpacity: 0.18 };
+  },
+  { immediate: true, deep: true },
+);
+</script>
+
+<template>
+  <TresCanvas window-size>
+    <TresPerspectiveCamera make-default />
+    <TresPrimitive :object="view.object3D" />
+    <TresPrimitive v-if="lines" :object="lines" />
+  </TresCanvas>
+</template>
+```
+
+:::
+
 ## computeVisibilityField {#computevisibilityfield}
 
 Helper pur, exporté depuis `core/visibility.ts`. Aucune dépendance Three — testable en Node, utilisable côté serveur.
@@ -132,6 +197,32 @@ tierMapForVisibilityField(
 ```
 
 `cubeKey` au format `"i|j|k"`. Les cubes hors range ou pour lesquels `cubeExists` retourne `false` sont absents de la map.
+
+### Exemple — décision gameplay côté serveur
+
+Cas typique : le serveur reçoit une action « scanner le cube X » et doit répondre `granted | denied` selon les sondes du joueur. Aucun render à monter — `tierMapForVisibilityField` suffit.
+
+```ts
+import { createGalaxyData } from 'stellex-galaxy-sandbox/core/GalaxyData';
+import { tierMapForVisibilityField } from 'stellex-galaxy-sandbox/core/Visibility';
+
+type Player = { probes: { i: number; k: number }[]; sensorRange: number };
+
+function canScan(world: { seed: number }, player: Player, target: { i: number; k: number }) {
+  const galaxy = createGalaxyData({ seed: world.seed });
+  const cubeExists = (i: number, j: number, k: number) => Boolean(galaxy.grid.get(i, j, k));
+
+  const tiers = tierMapForVisibilityField(player.probes, player.sensorRange, cubeExists);
+  const key = `${target.i}|0|${target.k}`;
+  const tier = tiers.get(key);
+
+  if (tier === undefined) return { ok: false, reason: 'out of sensor range' };
+  if (tier === 1) return { ok: true, fidelity: 'partial' };  // rim — fuzzy data
+  return { ok: true, fidelity: 'full' };                     // inner — full data
+}
+```
+
+Le client peut appeler `setVisibilityField` avec **la même config** : la frontière visuelle correspond exactement à ce que le serveur autorise.
 
 ## Performance
 

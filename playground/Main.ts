@@ -7,10 +7,11 @@ import { createPicker } from './Picker.js';
 import { setupGenPanel } from './GenPanel.js';
 import { createFog } from './Fog.js';
 import { createPlanView } from './PlanView.js';
-import { createGalaxyWorld, disposeGalaxyWorld } from './World.js';
-import type { GalaxyWorld, GalaxyWorldOptions } from './World.js';
-import { updateOrbitHover, updateCloseupHover } from './Hover.js';
+import { createGalaxyWorld } from './World.js';
+import type { GalaxyWorld } from './World.js';
 import { PLAYER_HIGHLIGHT_RGB } from './Player.js';
+import { startRenderLoop } from './RenderLoop.js';
+import { createRegenerate } from './Regenerate.js';
 
 function elementById<T extends HTMLElement>(id: string): T {
   const el = document.getElementById(id);
@@ -56,7 +57,6 @@ const fog = createFog();
 const planView = createPlanView();
 let restorePlanViewAfterCloseup = false;
 const activeCamera = () => planView.active ? orthoCamera : camera;
-const activeControls = () => planView.active ? orthoControls : controls;
 
 const hud = createHud();
 hud.setMode('orbite');
@@ -221,108 +221,29 @@ function handleCanvasClick(): void {
 
 // ─── Generation panel ───────────────────────────────────────────────────────
 
-const genPanel = setupGenPanel({ onRequestRegen: regenerateGalaxy });
+const genPanel = setupGenPanel({ onRequestRegen: (arg) => regenerate(arg) });
 
-let regenInProgress = false;
-function regenerateGalaxy({ newSeed = false }: { newSeed?: boolean } = {}): void {
-  if (regenInProgress) return;
-  regenInProgress = true;
-  const wasFog = fog.active;
-  const wasPlanView = planView.active;
-  // Exit dynamic modes before tearing down — restored after rebuild.
-  if (wasPlanView) planView.set(false, currentWorld, camerasBag, fog, hud);
-  if (wasFog) {
-    fog.disable(currentWorld, camerasBag, toggleGridEl.checked);
-    fogRangeRowEl.classList.remove('active');
-  }
-
-  const opts: GalaxyWorldOptions = genPanel.readOpts();
-  opts.seed = newSeed ? null : currentWorld.galaxyData.seed;
-
-  genPanel.setBusy(true);
-  genPanel.setStatus('génération…');
-
-  // Yield to the browser so the status text paints before the blocking work.
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    const t0 = performance.now();
-    fog.disposeGrid(currentWorld.galaxyScene);
-    disposeGalaxyWorld(currentWorld, scene);
-    currentWorld = createGalaxyWorld(opts, { scene, camera, controls, hud, seedEl });
-    const dt = Math.round(performance.now() - t0);
-
-    const params = new URLSearchParams(location.search);
-    params.set('seed', String(currentWorld.galaxyData.seed));
-    history.replaceState(null, '', `${location.pathname}?${params.toString()}`);
-
-    currentWorld.occupiedLines.visible = toggleGridEl.checked;
-    if (wasFog) {
-      toggleFogEl.checked = true;
-      fog.enable(currentWorld, camerasBag, planView.active);
-      fogRangeRowEl.classList.add('active');
-    }
-    if (wasPlanView) {
-      togglePlanViewEl.checked = true;
-      planView.set(true, currentWorld, camerasBag, fog, hud);
-    }
-
-    genPanel.setStatus(`${currentWorld.galaxyData.data.count.toLocaleString('fr-FR')} étoiles · ${dt} ms`);
-    genPanel.setBusy(false);
-    regenInProgress = false;
-  }));
-}
+const regenerate = createRegenerate({
+  scene,
+  perspectiveCamera: camera,
+  perspectiveControls: controls,
+  orthoCamera,
+  orthoControls,
+  orthoCamY: cameras.orthoCamY,
+  hud, seedEl, fog, planView, genPanel,
+  toggleGridEl, toggleFogEl, togglePlanViewEl, fogRangeRowEl,
+  getCurrentWorld: () => currentWorld,
+  setCurrentWorld: (w) => { currentWorld = w; },
+});
 
 // ─── Render loop ────────────────────────────────────────────────────────────
 
-const playerWorldCenter = new THREE.Vector3();
-const tStart = performance.now();
-
-function animate(): void {
-  const t = (performance.now() - tStart) / 1000;
-  const { closeup, galaxyData, galaxyScene, player, hoverWire } = currentWorld;
-  closeup.update(t);
-
-  if (fog.active && !closeup.isActive()) {
-    const c = galaxyData.grid.cubeToWorldCenter(player.cube.i, player.cube.j, player.cube.k);
-    playerWorldCenter.set(c.x, c.y, c.z);
-    galaxyScene.object3D.updateMatrixWorld();
-    playerWorldCenter.applyMatrix4(galaxyScene.object3D.matrixWorld);
-    if (planView.active) {
-      orthoControls.target.set(playerWorldCenter.x, 0, playerWorldCenter.z);
-      orthoCamera.position.set(playerWorldCenter.x, camerasBag.orthoCamY, playerWorldCenter.z);
-    } else {
-      controls.target.copy(playerWorldCenter);
-    }
-  }
-
-  activeControls().update();
-  if (planView.active) {
-    // Wheel-driven ortho zoom changes — re-apply each frame so sprites track
-    // (cheap, 4 uniforms).
-    galaxyScene.setOrthoSize(orthoCamera.zoom);
-  }
-
-  if (closeup.isActive()) {
-    updateCloseupHover({ picker, hud, closeup, starTooltip });
-  } else {
-    updateOrbitHover({
-      picker, hud, fog, canvas,
-      hoverWire: currentWorld.hoverWire,
-      hoverLabel: currentWorld.hoverLabel,
-      galaxyData, galaxyScene, player,
-      activeCamera: activeCamera(),
-    });
-  }
-
-  // Idle slow-rotation only when the user isn't hovering a clickable cube and
-  // no dynamic mode is active.
-  if (!hoverWire.visible && !closeup.isActive() && !fog.active && !planView.active) {
-    galaxyScene.object3D.rotation.y += 0.0004;
-  }
-
-  const cam = activeCamera();
-  renderer.render(scene, cam);
-  labelRenderer.render(scene, cam);
-  hud.tick();
-  requestAnimationFrame(animate);
-}
-animate();
+startRenderLoop({
+  renderer, labelRenderer, scene, hud, fog, planView, picker, canvas, starTooltip,
+  perspectiveCamera: camera,
+  perspectiveControls: controls,
+  orthoCamera,
+  orthoControls,
+  orthoCamY: cameras.orthoCamY,
+  getCurrentWorld: () => currentWorld,
+});

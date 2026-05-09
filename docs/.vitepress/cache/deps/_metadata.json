@@ -1,40 +1,76 @@
 {
-  "hash": "6891e9cf",
-  "configHash": "cbe0340f",
+  "hash": "454b3f10",
+  "configHash": "4a745aa3",
   "lockfileHash": "e15fdde1",
-  "browserHash": "a35e5661",
+  "browserHash": "01fcd2ae",
   "optimized": {
     "vue": {
       "src": "../../../../node_modules/vue/dist/vue.runtime.esm-bundler.js",
       "file": "vue.js",
-      "fileHash": "4a2bbe46",
+      "fileHash": "b9391490",
       "needsInterop": false
     },
     "vitepress > @vue/devtools-api": {
       "src": "../../../../node_modules/@vue/devtools-api/dist/index.js",
       "file": "vitepress___@vue_devtools-api.js",
-      "fileHash": "d673bab5",
+      "fileHash": "46c719af",
       "needsInterop": false
     },
     "vitepress > @vueuse/core": {
       "src": "../../../../node_modules/@vueuse/core/index.mjs",
       "file": "vitepress___@vueuse_core.js",
-      "fileHash": "ecd8e06a",
+      "fileHash": "62a44c17",
       "needsInterop": false
     },
-    "@theme/index": {
-      "src": "../../../../node_modules/vitepress/dist/client/theme-default/index.js",
-      "file": "@theme_index.js",
-      "fileHash": "ed01d496",
+    "@tresjs/core": {
+      "src": "../../../../node_modules/@tresjs/core/dist/tres.js",
+      "file": "@tresjs_core.js",
+      "fileHash": "eaa1655f",
+      "needsInterop": false
+    },
+    "three": {
+      "src": "../../../../node_modules/three/build/three.module.js",
+      "file": "three.js",
+      "fileHash": "c806aceb",
+      "needsInterop": false
+    },
+    "three/addons/lines/LineSegments2.js": {
+      "src": "../../../../node_modules/three/examples/jsm/lines/LineSegments2.js",
+      "file": "three_addons_lines_LineSegments2__js.js",
+      "fileHash": "06db9743",
+      "needsInterop": false
+    },
+    "three/addons/lines/LineSegmentsGeometry.js": {
+      "src": "../../../../node_modules/three/examples/jsm/lines/LineSegmentsGeometry.js",
+      "file": "three_addons_lines_LineSegmentsGeometry__js.js",
+      "fileHash": "9715958f",
+      "needsInterop": false
+    },
+    "three/addons/lines/LineMaterial.js": {
+      "src": "../../../../node_modules/three/examples/jsm/lines/LineMaterial.js",
+      "file": "three_addons_lines_LineMaterial__js.js",
+      "fileHash": "904e9572",
       "needsInterop": false
     }
   },
   "chunks": {
-    "chunk-U44ZK3CZ": {
-      "file": "chunk-U44ZK3CZ.js"
+    "chunk-CTB6M2YV": {
+      "file": "chunk-CTB6M2YV.js"
     },
     "chunk-O6EOGSKJ": {
       "file": "chunk-O6EOGSKJ.js"
+    },
+    "chunk-4PKMCMIR": {
+      "file": "chunk-4PKMCMIR.js"
+    },
+    "chunk-PNRVRCYK": {
+      "file": "chunk-PNRVRCYK.js"
+    },
+    "chunk-P7ZQBBOL": {
+      "file": "chunk-P7ZQBBOL.js"
+    },
+    "chunk-UVKRO5ER": {
+      "file": "chunk-UVKRO5ER.js"
     }
   }
 }

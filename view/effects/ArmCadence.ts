@@ -39,3 +39,29 @@ export function resolveArmCadence(
   }
   return { spinJ, phaseJ };
 }
+
+/**
+ * Writes the unit-length spiral tangent (XZ plane) for a particle at radius `r`
+ * and angle `theta` on arm `arm` into `tangents[2n]` and `tangents[2n+1]`.
+ *
+ * Uses the analytic derivative of `(r*cos(armAngle + r/radius * 2π * spin * spinJ[a]), r*sin(...))`
+ * with respect to `r`, normalised to unit length so the GLSL `STRETCH_VERT`
+ * shader can rotate the sprite UV directly.
+ */
+export function writeSpiralTangent(
+  tangents: Float32Array,
+  n: number,
+  arm: number,
+  r: number,
+  theta: number,
+  radius: number,
+  spin: number,
+  spinJ: number[],
+): void {
+  const dThetaDr = (Math.PI * 2 * spin * spinJ[arm]) / radius;
+  const dposX = Math.cos(theta) - r * Math.sin(theta) * dThetaDr;
+  const dposZ = Math.sin(theta) + r * Math.cos(theta) * dThetaDr;
+  const dposLen = Math.hypot(dposX, dposZ) || 1;
+  tangents[n * 2 + 0] = dposX / dposLen;
+  tangents[n * 2 + 1] = dposZ / dposLen;
+}

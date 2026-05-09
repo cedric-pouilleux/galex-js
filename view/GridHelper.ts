@@ -22,19 +22,30 @@ function initialLineResolution(): THREE.Vector2 {
   return new THREE.Vector2(1, 1);
 }
 
+// Indices of the 12 edges of an axis-aligned box, referencing the 8 corners
+// in their canonical order (-x-y-z, +x-y-z, +x+y-z, -x+y-z, -x-y+z, +x-y+z, +x+y+z, -x+y+z).
+const BOX_EDGE_INDICES: readonly [number, number][] = [
+  [0, 1], [1, 2], [2, 3], [3, 0],
+  [4, 5], [5, 6], [6, 7], [7, 4],
+  [0, 4], [1, 5], [2, 6], [3, 7],
+];
+
+function boxCornersAround(cx: number, cy: number, cz: number, halfSize: number): [number, number, number][] {
+  const x0 = cx - halfSize, y0 = cy - halfSize, z0 = cz - halfSize;
+  const x1 = cx + halfSize, y1 = cy + halfSize, z1 = cz + halfSize;
+  return [
+    [x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0],
+    [x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1],
+  ];
+}
+
+function pushBoxEdges(out: number[], corners: [number, number, number][]): void {
+  for (const [a, b] of BOX_EDGE_INDICES) out.push(...corners[a], ...corners[b]);
+}
+
 function makeBoxEdgePositions(cubeSize: number): number[] {
-  const s = cubeSize / 2;
-  const c: [number, number, number][] = [
-    [-s,-s,-s], [ s,-s,-s], [ s, s,-s], [-s, s,-s],
-    [-s,-s, s], [ s,-s, s], [ s, s, s], [-s, s, s],
-  ];
-  const edges: [number, number][] = [
-    [0,1],[1,2],[2,3],[3,0],
-    [4,5],[5,6],[6,7],[7,4],
-    [0,4],[1,5],[2,6],[3,7],
-  ];
   const out: number[] = [];
-  for (const [a, b] of edges) out.push(...c[a], ...c[b]);
+  pushBoxEdges(out, boxCornersAround(0, 0, 0, cubeSize / 2));
   return out;
 }
 
@@ -65,24 +76,10 @@ export function createCubeWireframe(
 
 export function createOccupiedGridLines(grid: CubeGrid, color = 0x223044): THREE.LineSegments {
   const positions: number[] = [];
-  const s = grid.cubeSize;
+  const halfSize = grid.cubeSize / 2;
   for (const cube of grid.cubes.values()) {
     const c = grid.cubeToWorldCenter(cube.i, cube.j, cube.k);
-    const x0 = c.x - s / 2, y0 = c.y - s / 2, z0 = c.z - s / 2;
-    const x1 = c.x + s / 2, y1 = c.y + s / 2, z1 = c.z + s / 2;
-
-    const corners: [number, number, number][] = [
-      [x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0],
-      [x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1],
-    ];
-    const edges: [number, number][] = [
-      [0,1],[1,2],[2,3],[3,0],
-      [4,5],[5,6],[6,7],[7,4],
-      [0,4],[1,5],[2,6],[3,7],
-    ];
-    for (const [a, b] of edges) {
-      positions.push(...corners[a], ...corners[b]);
-    }
+    pushBoxEdges(positions, boxCornersAround(c.x, c.y, c.z, halfSize));
   }
 
   const geo = new THREE.BufferGeometry();
@@ -111,13 +108,8 @@ export function createVisibilityFieldLines(
     fadedOpacity = 0.045,
   }: { range?: number; color?: number; fullOpacity?: number; fadedOpacity?: number } = {},
 ): THREE.Group {
-  const s = grid.cubeSize;
+  const halfSize = grid.cubeSize / 2;
   const tiers: number[][] = [[], []];
-  const edges: [number, number][] = [
-    [0, 1], [1, 2], [2, 3], [3, 0],
-    [4, 5], [5, 6], [6, 7], [7, 4],
-    [0, 4], [1, 5], [2, 6], [3, 7],
-  ];
 
   const cubeExists = (i: number, j: number, k: number) => Boolean(grid.get(i, j, k));
   const tierByCube = tierMapForVisibilityField(focals, range, cubeExists);
@@ -126,15 +118,7 @@ export function createVisibilityFieldLines(
     const [iStr, jStr, kStr] = key.split('|');
     const i = Number(iStr), j = Number(jStr), k = Number(kStr);
     const c = grid.cubeToWorldCenter(i, j, k);
-    const x0 = c.x - s / 2, y0 = c.y - s / 2, z0 = c.z - s / 2;
-    const x1 = c.x + s / 2, y1 = c.y + s / 2, z1 = c.z + s / 2;
-    const corners: [number, number, number][] = [
-      [x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0],
-      [x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1],
-    ];
-    for (const [a, b] of edges) {
-      tiers[tier].push(...corners[a], ...corners[b]);
-    }
+    pushBoxEdges(tiers[tier], boxCornersAround(c.x, c.y, c.z, halfSize));
   }
 
   const group = new THREE.Group();

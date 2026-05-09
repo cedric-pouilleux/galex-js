@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, toValue } from 'vue';
-import type { MaybeRefOrGetter } from 'vue';
 import type { GalaxyData } from '../../core/GalaxyData.js';
 import { useGalaxyLayers } from '../composables/UseGalaxyLayers.js';
 import type { GalaxyLayersOptions } from '../composables/UseGalaxyLayers.js';

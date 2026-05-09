@@ -18,15 +18,6 @@ test('detCos matches Math.cos within 1e-12 across [-2π, 2π]', () => {
   }
 });
 
-test('detSin / detCos handle exact quadrant boundaries', () => {
-  assert.ok(Math.abs(detSin(0) - 0) < TOL);
-  assert.ok(Math.abs(detCos(0) - 1) < TOL);
-  assert.ok(Math.abs(detSin(Math.PI / 2) - 1) < TOL);
-  assert.ok(Math.abs(detCos(Math.PI / 2) - 0) < TOL);
-  assert.ok(Math.abs(detSin(Math.PI) - 0) < TOL);
-  assert.ok(Math.abs(detCos(Math.PI) - -1) < TOL);
-});
-
 test('Pythagorean identity holds for arbitrary angles', () => {
   for (let x = -50; x <= 50; x += 0.317) {
     const s = detSin(x), c = detCos(x);

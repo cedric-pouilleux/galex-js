@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGalaxyData } from './GalaxyData.js';
+import { hashFloat32 } from '../tools/HashFloat32.js';
 
 const OPTS = {
   seed: 42,
@@ -15,22 +16,6 @@ const OPTS = {
   minDistance: 0.25,
   fillCenter: false,
 };
-
-// FNV-1a over the typed array's bytes, read in explicit little-endian. Uses
-// only Math.imul / bit ops, so the hash itself is bit-stable across engines —
-// any hash mismatch can only come from the deterministic chain diverging.
-function hashFloat32(arr: Float32Array): number {
-  const view = new DataView(arr.buffer, arr.byteOffset, arr.byteLength);
-  let h = 0x811c9dc5;
-  for (let i = 0; i < arr.length; i++) {
-    const u32 = view.getUint32(i * 4, true);
-    h = Math.imul(h ^ (u32 & 0xff), 0x01000193) >>> 0;
-    h = Math.imul(h ^ ((u32 >>> 8) & 0xff), 0x01000193) >>> 0;
-    h = Math.imul(h ^ ((u32 >>> 16) & 0xff), 0x01000193) >>> 0;
-    h = Math.imul(h ^ ((u32 >>> 24) & 0xff), 0x01000193) >>> 0;
-  }
-  return h >>> 0;
-}
 
 test('two GalaxyData with the same seed produce byte-identical buffers', () => {
   const a = createGalaxyData(OPTS).data;

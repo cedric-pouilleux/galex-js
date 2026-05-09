@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { resolveArmCadence } from './ArmCadence.js';
+import { resolveArmCadence, writeSpiralTangent } from './ArmCadence.js';
 import type { ArmLayerOptions } from './ArmCadence.js';
 import { STRETCH_VERT, STRETCH_FRAG, createPointsMaterialDef } from './Shaders.js';
 import type { ShaderMaterialDef } from './Shaders.js';
@@ -69,13 +69,7 @@ export function buildInnerRingBuffers({
     positions[n * 3 + 1] = (rng() - 0.5) * 0.5;
     positions[n * 3 + 2] = cz;
 
-    // Tangent so the trails coil around the centre.
-    const dThetaDr = (Math.PI * 2 * spin * spinJ[arm]) / radius;
-    const dposX = Math.cos(theta) - r * Math.sin(theta) * dThetaDr;
-    const dposZ = Math.sin(theta) + r * Math.cos(theta) * dThetaDr;
-    const dposLen = Math.hypot(dposX, dposZ) || 1;
-    tangents[n * 2 + 0] = dposX / dposLen;
-    tangents[n * 2 + 1] = dposZ / dposLen;
+    writeSpiralTangent(tangents, n, arm, r, theta, radius, spin, spinJ);
     // 60% round granules, 40% stretched trails that wrap around the bulge.
     stretches[n] = rng() < 0.4 ? 0.6 + rng() * 0.3 : 0;
 

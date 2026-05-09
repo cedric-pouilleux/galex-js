@@ -5,20 +5,7 @@ import * as THREE from 'three';
 import { createGalaxyData } from '../../core/GalaxyData.js';
 import { createGalaxyScene } from '../../view/GalaxyScene.js';
 import { useGalaxyLayers } from './UseGalaxyLayers.js';
-
-/** FNV-1a over a typed array's bytes — same hash function as the cross-engine harness. */
-function hashFloat32(arr: Float32Array): number {
-  const view = new DataView(arr.buffer, arr.byteOffset, arr.byteLength);
-  let h = 0x811c9dc5;
-  for (let i = 0; i < arr.length; i++) {
-    const u32 = view.getUint32(i * 4, true);
-    h = Math.imul(h ^ (u32 & 0xff), 0x01000193) >>> 0;
-    h = Math.imul(h ^ ((u32 >>> 8) & 0xff), 0x01000193) >>> 0;
-    h = Math.imul(h ^ ((u32 >>> 16) & 0xff), 0x01000193) >>> 0;
-    h = Math.imul(h ^ ((u32 >>> 24) & 0xff), 0x01000193) >>> 0;
-  }
-  return h >>> 0;
-}
+import { hashFloat32 } from '../../tools/HashFloat32.js';
 
 const baseOpts = {
   seed: 42,
@@ -88,68 +75,46 @@ test('useGalaxyLayers scales gas counts with gasDensity', () => {
 
 // Cross-target determinism: the declarative Vue path (useGalaxyLayers) and the
 // imperative vanilla path (createGalaxyScene) must produce byte-identical
-// buffers for the same (seed, opts). If they diverged, a Vue client and a
-// vanilla Three client looking at the same world would render different
-// galaxies — defeating the whole determinism contract.
-test('useGalaxyLayers buffers are byte-identical to createGalaxyScene buffers', () => {
-  const data = createGalaxyData({ ...baseOpts, fillCenter: false });
+// buffers for the same (seed, opts) — both with and without the center bulge.
+// If they diverged, a Vue client and a vanilla Three client looking at the
+// same world would render different galaxies, defeating the determinism
+// contract.
+for (const fillCenter of [false, true]) {
+  test(`useGalaxyLayers buffers match createGalaxyScene (fillCenter=${fillCenter})`, () => {
+    const data = createGalaxyData({ ...baseOpts, fillCenter });
+    const v = useGalaxyLayers(ref(data)).value;
 
-  const layers = useGalaxyLayers(ref(data));
-  const v = layers.value;
+    const scope = effectScope();
+    scope.run(() => {
+      const scene = createGalaxyScene(data);
+      const findByName = (name: string) =>
+        scene.object3D.children.find((c) => c.name === name) as THREE.Points;
+      const positionsOf = (name: string) =>
+        findByName(name).geometry.attributes.position.array as Float32Array;
 
-  // Build the vanilla counterpart in an effect scope so its onScopeDispose
-  // hooks (none for createGalaxyScene, but future-proof) get cleaned up.
-  const scope = effectScope();
-  scope.run(() => {
-    const scene = createGalaxyScene(data);
+      assert.equal(hashFloat32(v.armGlow.buffers.positions),    hashFloat32(positionsOf('armGlow')),    'armGlow positions diverge');
+      assert.equal(hashFloat32(v.gasStreaks.buffers.positions), hashFloat32(positionsOf('gasStreaks')), 'gasStreaks positions diverge');
+      assert.equal(hashFloat32(v.nebulae.buffers.positions),    hashFloat32(positionsOf('nebulae')),    'nebulae positions diverge');
+      assert.equal(hashFloat32(v.innerRing.buffers.positions),  hashFloat32(positionsOf('innerRing')),  'innerRing positions diverge');
+      // Star field: same source (the GalaxyData buffers) — pointer equality, not just hash.
+      assert.equal(v.field.positions, data.data.positions);
 
-    const vanillaArmGlow    = scene.object3D.children.find((c) => c.name === 'armGlow') as THREE.Points;
-    const vanillaGasStreaks = scene.object3D.children.find((c) => c.name === 'gasStreaks') as THREE.Points;
-    const vanillaNebulae    = scene.object3D.children.find((c) => c.name === 'nebulae') as THREE.Points;
-    const vanillaInnerRing  = scene.object3D.children.find((c) => c.name === 'innerRing') as THREE.Points;
+      if (fillCenter) {
+        const cdLayer = v.centerDust!;
+        const vanillaCenter = scene.object3D.children.find((c) => c.name === 'centerDust') as THREE.Group;
+        const vanillaDust = vanillaCenter.children.find(
+          (c) => (c as THREE.Points).geometry?.attributes?.aTangent,
+        ) as THREE.Points;
+        const vanillaDustPos = vanillaDust.geometry.attributes.position.array as Float32Array;
+        assert.equal(
+          hashFloat32(cdLayer.dust.buffers.positions),
+          hashFloat32(vanillaDustPos),
+          'centerDust positions diverge',
+        );
+      }
 
-    const vanillaArmGlowPos    = vanillaArmGlow.geometry.attributes.position.array    as Float32Array;
-    const vanillaGasStreaksPos = vanillaGasStreaks.geometry.attributes.position.array as Float32Array;
-    const vanillaNebulaePos    = vanillaNebulae.geometry.attributes.position.array    as Float32Array;
-    const vanillaInnerRingPos  = vanillaInnerRing.geometry.attributes.position.array  as Float32Array;
-
-    assert.equal(hashFloat32(v.armGlow.buffers.positions),    hashFloat32(vanillaArmGlowPos),    'armGlow positions diverge');
-    assert.equal(hashFloat32(v.gasStreaks.buffers.positions), hashFloat32(vanillaGasStreaksPos), 'gasStreaks positions diverge');
-    assert.equal(hashFloat32(v.nebulae.buffers.positions),    hashFloat32(vanillaNebulaePos),    'nebulae positions diverge');
-    assert.equal(hashFloat32(v.innerRing.buffers.positions),  hashFloat32(vanillaInnerRingPos),  'innerRing positions diverge');
-
-    // Star field: same source (the GalaxyData buffers) — pointer equality, not just hash.
-    assert.equal(v.field.positions, data.data.positions);
-
-    scene.dispose();
+      scene.dispose();
+    });
+    scope.stop();
   });
-  scope.stop();
-});
-
-test('useGalaxyLayers centerDust buffers are byte-identical to vanilla', () => {
-  const data = createGalaxyData({ ...baseOpts, fillCenter: true });
-
-  const layers = useGalaxyLayers(ref(data));
-  const cdLayer = layers.value.centerDust;
-  assert.ok(cdLayer);
-
-  const scope = effectScope();
-  scope.run(() => {
-    const scene = createGalaxyScene(data);
-    const vanillaCenter = scene.object3D.children.find((c) => c.name === 'centerDust');
-    assert.ok(vanillaCenter);
-    const vanillaDust = (vanillaCenter as THREE.Group).children.find(
-      (c) => (c as THREE.Points).geometry?.attributes?.aTangent,
-    ) as THREE.Points;
-    const vanillaDustPos = vanillaDust.geometry.attributes.position.array as Float32Array;
-
-    assert.equal(
-      hashFloat32(cdLayer.dust.buffers.positions),
-      hashFloat32(vanillaDustPos),
-      'centerDust positions diverge',
-    );
-
-    scene.dispose();
-  });
-  scope.stop();
-});
+}

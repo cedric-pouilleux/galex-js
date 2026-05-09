@@ -17,9 +17,9 @@ export function makeCubeLabel(variant: string): CSS2DObject {
 
 /**
  * Updates the coord + count lines of a cube label. Flat galaxy: only i and k
- * are shown; j is always 0.
+ * are shown; j is always 0 and not surfaced.
  */
-export function setLabel(label: CSS2DObject, i: number, _j: number, k: number, count: number): void {
+export function setLabel(label: CSS2DObject, i: number, k: number, count: number): void {
   const el = label.element;
   (el.children[0] as HTMLElement).textContent = `[${i}, ${k}]`;
   (el.children[1] as HTMLElement).textContent = count === 1 ? '1 étoile' : `${count.toLocaleString('fr-FR')} étoiles`;

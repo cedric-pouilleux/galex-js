@@ -8,6 +8,7 @@ import { createGalaxyScene } from '../view/GalaxyScene.js';
 import type { GalaxyScene } from '../view/GalaxyScene.js';
 import { createCubeWireframe, createOccupiedGridLines } from '../view/GridHelper.js';
 import { createCubeMarker } from '../view/CubeMarker.js';
+import { disposeObject3DTree } from '../view/Dispose.js';
 import type { CubeMarker } from '../view/CubeMarker.js';
 import { makeCubeLabel } from './Labels.js';
 import { createCloseup } from './Closeup.js';
@@ -103,14 +104,7 @@ export function disposeGalaxyWorld(world: GalaxyWorld, scene: THREE.Scene): void
   hoverWire.geometry.dispose();
   (hoverWire.material as THREE.Material).dispose();
 
-  playerMarker.object3D.traverse((o) => {
-    const mesh = o as THREE.Mesh;
-    if (mesh.geometry) mesh.geometry.dispose();
-    if (mesh.material) {
-      if (Array.isArray(mesh.material)) mesh.material.forEach((m) => m.dispose());
-      else (mesh.material as THREE.Material).dispose();
-    }
-  });
+  disposeObject3DTree(playerMarker.object3D);
 
   scene.remove(galaxyScene.object3D);
   galaxyScene.dispose();

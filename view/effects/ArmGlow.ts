@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { resolveArmCadence } from './ArmCadence.js';
+import { resolveArmCadence, writeSpiralTangent } from './ArmCadence.js';
 import type { ArmLayerOptions } from './ArmCadence.js';
 import {
   ARM_GLOW_PALETTE, STRETCH_VERT, STRETCH_FRAG, createPointsMaterialDef,
@@ -53,7 +53,6 @@ export function buildArmGlowBuffers({
   for (let a = 0; a < arms; a++) {
     const armAngle = (a / arms) * Math.PI * 2 + phaseJ[a];
     const tint = ARM_GLOW_PALETTE[a % ARM_GLOW_PALETTE.length];
-    const dThetaDr = (Math.PI * 2 * spin * spinJ[a]) / radius;
 
     for (let p = 0; p < particlesPerArm; p++) {
       const t = p / (particlesPerArm - 1);
@@ -72,11 +71,7 @@ export function buildArmGlowBuffers({
       positions[n * 3 + 1] = (rng() - 0.5) * 0.5;
       positions[n * 3 + 2] = cz + nz * offset;
 
-      const dposX = Math.cos(theta) - r * Math.sin(theta) * dThetaDr;
-      const dposZ = Math.sin(theta) + r * Math.cos(theta) * dThetaDr;
-      const dposLen = Math.hypot(dposX, dposZ) || 1;
-      tangents[n * 2 + 0] = dposX / dposLen;
-      tangents[n * 2 + 1] = dposZ / dposLen;
+      writeSpiralTangent(tangents, n, a, r, theta, radius, spin, spinJ);
       stretches[n] = 0.85;
 
       const fade = Math.sin(t * Math.PI);

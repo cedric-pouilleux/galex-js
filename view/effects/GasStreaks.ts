@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { resolveArmCadence } from './ArmCadence.js';
+import { resolveArmCadence, writeSpiralTangent } from './ArmCadence.js';
 import type { ArmLayerOptions } from './ArmCadence.js';
 import {
   STREAK_PALETTE, HAZE_PALETTE, STRETCH_VERT, STRETCH_FRAG, createPointsMaterialDef,
@@ -69,8 +69,6 @@ export function buildGasStreaksBuffers({
     const colorA = STREAK_PALETTE[ci];
     const colorB = STREAK_PALETTE[(ci + 1 + Math.floor(rng() * (STREAK_PALETTE.length - 1))) % STREAK_PALETTE.length];
 
-    const dThetaDr = (Math.PI * 2 * spin * spinJ[arm]) / radius;
-
     for (let b = 0; b < BLOBS_PER_STREAK; b++) {
       const t = b / (BLOBS_PER_STREAK - 1);
       const r = r0 + dr * t;
@@ -93,12 +91,7 @@ export function buildGasStreaksBuffers({
       positions[n * 3 + 1] = (rng() - 0.5) * 0.7;
       positions[n * 3 + 2] = pz + tz * ja + nz * jc;
 
-      // Local spiral tangent in XZ plane (parameterized by r)
-      const dposX = Math.cos(theta) - r * Math.sin(theta) * dThetaDr;
-      const dposZ = Math.sin(theta) + r * Math.cos(theta) * dThetaDr;
-      const dposLen = Math.hypot(dposX, dposZ) || 1;
-      tangents[n * 2 + 0] = dposX / dposLen;
-      tangents[n * 2 + 1] = dposZ / dposLen;
+      writeSpiralTangent(tangents, n, arm, r, theta, radius, spin, spinJ);
       stretches[n] = isLong ? 1.0 : 0.75;
 
       const v = 0.55 + rng() * 0.4;

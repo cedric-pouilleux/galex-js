@@ -1,0 +1,70 @@
+/* Demo-canvas common styling. Each demo declares its own height via the
+   `height` prop; this file only handles the shared frame + caption layout. */
+.demo-frame {
+  position: relative;
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #04060b;
+  border: 1px solid var(--vp-c-divider);
+  margin: 1.25rem 0;
+}
+
+/* TresCanvas creates its own wrapper + canvas; ensure both fill the frame
+   so the renderer's auto-resize observer picks up the right dimensions. */
+.demo-frame > div,
+.demo-frame canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.demo-caption {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.65);
+  pointer-events: none;
+  letter-spacing: 0.02em;
+}
+
+.demo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin: 1.5rem 0;
+}
+
+.demo-grid .demo-frame {
+  margin: 0;
+}
+
+.demo-modeswitch {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  display: inline-flex;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px;
+  border-radius: 6px;
+  z-index: 2;
+}
+
+.demo-modeswitch button {
+  font-family: var(--vp-font-family-mono);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  background: transparent;
+  border: 0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.demo-modeswitch button.active {
+  background: rgba(127, 255, 159, 0.18);
+  color: #c9ffd6;
+}

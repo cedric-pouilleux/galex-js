@@ -40,7 +40,21 @@
       "Read(//tmp/**)",
       "PowerShell(npm run typecheck)",
       "PowerShell(npm test)",
-      "PowerShell(npm run docs:build)"
+      "PowerShell(npm run docs:build)",
+      "Bash(ssh -T git@github.com)",
+      "PowerShell(if \\(Test-Path \"$env:USERPROFILE\\\\.ssh\"\\) { Get-ChildItem \"$env:USERPROFILE\\\\.ssh\" | Select-Object Name } else { \"No .ssh directory found\" })",
+      "PowerShell($sshDir = \"$env:USERPROFILE\\\\.ssh\"; if \\(Test-Path $sshDir\\) { Write-Output \"SSH dir exists: $sshDir\"; Get-ChildItem $sshDir -Force | Format-Table Name, Length } else { Write-Output \"No .ssh directory at $sshDir\" })",
+      "PowerShell(ssh-keygen -t ed25519 -C \"mino.mnz@gmail.com\" -f \"$env:USERPROFILE\\\\.ssh\\\\id_ed25519\" -N '\"\"')",
+      "PowerShell(Get-Service ssh-agent)",
+      "PowerShell($svc = Get-Service ssh-agent -ErrorAction SilentlyContinue; if \\($svc\\) { Write-Output \"Service: $\\($svc.Name\\) | Status: $\\($svc.Status\\) | StartType: $\\($svc.StartType\\)\" } else { Write-Output \"ssh-agent service not found\" })",
+      "Bash(npx vitepress *)",
+      "Bash(curl -sS -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5174/examples/)",
+      "Bash(curl -sS http://localhost:5174/examples/)",
+      "Bash(curl -sS http://localhost:5174/examples/options)",
+      "Bash(curl -sS \"http://localhost:5174/@fs/D:/dev/stellex-galaxy-sandbox/docs/.vitepress/theme/components/GalaxyDemo.vue\")",
+      "Bash(cp /tmp/check_demos.mjs ./check_demos.mjs)",
+      "Bash(node ./check_demos.mjs)",
+      "Bash(node ./screenshot.mjs)"
     ]
   }
 }
