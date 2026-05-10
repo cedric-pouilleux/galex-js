@@ -37,8 +37,8 @@ Ces deux modules vivent dans `playground/` (pas dans la lib), mais sont document
 Le jeu compose le concept "joueur" en bindant les primitives à ses propres données :
 
 ```ts
-import { createCubeMarker } from 'stellex/view/CubeMarker.js';
-import { createVisibilityFieldLines } from 'stellex/view/GridHelper.js';
+import { createCubeMarker } from 'galex-js/view/CubeMarker';
+import { createVisibilityFieldLines } from 'galex-js/view/GridHelper';
 
 // 1. Marqueur sur le cube du joueur
 const myMarker = createCubeMarker(galaxyData.opts.cubeSize, { color: team.color });

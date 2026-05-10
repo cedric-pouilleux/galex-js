@@ -3,8 +3,8 @@
 Entrée principale côté données. Construit le squelette déterministe d'une galaxie : seed effective, options résolues, paramètres spiraux par bras, buffers d'étoiles (`Float32Array`) et grille de cubes indexée. Aucune dépendance Three / DOM — utilisable côté serveur.
 
 ```ts
-import { createGalaxyData } from 'stellex-galaxy-sandbox/core/GalaxyData';
-import type { GalaxyData, GalaxyDataOptions } from 'stellex-galaxy-sandbox/core/GalaxyData';
+import { createGalaxyData } from 'galex-js/core/GalaxyData';
+import type { GalaxyData, GalaxyDataOptions } from 'galex-js/core/GalaxyData';
 
 const galaxy = createGalaxyData({ seed: 42, count: 15000, radius: 50 });
 ```
@@ -77,8 +77,8 @@ Cf. [Compatibilité cross-engine](../compatibility/) pour les détails.
 ## Pattern serveur typique
 
 ```ts
-import { createGalaxyData } from 'stellex-galaxy-sandbox/core/GalaxyData';
-import type { GalaxyData } from 'stellex-galaxy-sandbox/core/GalaxyData';
+import { createGalaxyData } from 'galex-js/core/GalaxyData';
+import type { GalaxyData } from 'galex-js/core/GalaxyData';
 
 // One immutable instance per (seed, opts) tuple — safe to keep in RAM.
 const galaxyCache = new Map<number, GalaxyData>();

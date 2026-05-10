@@ -40,7 +40,7 @@ export type GalaxyData = {
 };
 
 /**
- * Pure-data side of a Stellex galaxy. Contains the seed, resolved options,
+ * Pure-data side of a GalexJS galaxy. Contains the seed, resolved options,
  * star buffers, spatial grid, and arm parameters — nothing that requires a
  * browser or a renderer. Importable on a Node backend (no DOM, no WebGL,
  * no `three`).

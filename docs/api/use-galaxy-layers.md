@@ -3,7 +3,7 @@
 Composable Vue **déclaratif** : transforme un `GalaxyData` en un `ComputedRef<GalaxyLayers>` contenant les buffers + material defs réactifs prêts à monter dans un template TresJS.
 
 ```ts
-import { useGalaxyLayers } from 'stellex-galaxy-sandbox/view-vue';
+import { useGalaxyLayers } from 'galex-js/view-vue';
 
 const layers = useGalaxyLayers(() => galaxyData);
 ```

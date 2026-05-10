@@ -5,7 +5,7 @@ Marqueur visuel autour d'un cube. Lisible en perspective (orbite) et en vue plat
 ## Signature
 
 ```ts
-import { createCubeMarker } from 'stellex/view/CubeMarker.js';
+import { createCubeMarker } from 'galex-js/view/CubeMarker';
 
 createCubeMarker(cubeSize: number, opts?: CubeMarkerOptions): {
   readonly object3D: THREE.Group;
@@ -45,7 +45,7 @@ Trois couches :
 ::: code-group
 
 ```ts [Vanilla Three]
-import { createCubeMarker } from 'stellex-galaxy-sandbox/view/CubeMarker';
+import { createCubeMarker } from 'galex-js/view/CubeMarker';
 
 // Marqueur joueur (vert classique)
 const me = createCubeMarker(2, { color: 0x7fff9f });
@@ -64,7 +64,7 @@ const enemy = createCubeMarker(2, {
 ```vue [Vue / TresJS]
 <script setup lang="ts">
 import { computed } from 'vue';
-import { createCubeMarker } from 'stellex-galaxy-sandbox/view/CubeMarker';
+import { createCubeMarker } from 'galex-js/view/CubeMarker';
 
 const props = defineProps<{ player: { cube: { i: number; k: number } } }>();
 
@@ -111,7 +111,7 @@ function onCameraModeChange(mode: 'orbit' | 'plan') {
 ```vue [Vue / TresJS]
 <script setup lang="ts">
 import { watch } from 'vue';
-import { createCubeMarker } from 'stellex-galaxy-sandbox/view/CubeMarker';
+import { createCubeMarker } from 'galex-js/view/CubeMarker';
 
 const props = defineProps<{ cameraMode: 'orbit' | 'plan' }>();
 const marker = createCubeMarker(2, { color: 0x7fff9f });
@@ -136,8 +136,8 @@ Pattern recommandé pour gérer dynamiquement N marqueurs : une `Map` indexée p
 ::: code-group
 
 ```ts [Vanilla Three]
-import { createCubeMarker } from 'stellex-galaxy-sandbox/view/CubeMarker';
-import type { CubeMarker } from 'stellex-galaxy-sandbox/view/CubeMarker';
+import { createCubeMarker } from 'galex-js/view/CubeMarker';
+import type { CubeMarker } from 'galex-js/view/CubeMarker';
 
 type Fleet = { id: string; cube: { i: number; k: number }; color: number };
 
@@ -181,8 +181,8 @@ function disposeMarker(marker: CubeMarker) {
 ```vue [Vue / TresJS]
 <script setup lang="ts">
 import { onBeforeUnmount, watchEffect } from 'vue';
-import { createCubeMarker } from 'stellex-galaxy-sandbox/view/CubeMarker';
-import type { CubeMarker } from 'stellex-galaxy-sandbox/view/CubeMarker';
+import { createCubeMarker } from 'galex-js/view/CubeMarker';
+import type { CubeMarker } from 'galex-js/view/CubeMarker';
 
 type Fleet = { id: string; cube: { i: number; k: number }; color: number };
 
@@ -239,7 +239,7 @@ function animate(t: number) {
 ```vue [Vue / TresJS]
 <script setup lang="ts">
 import { useRenderLoop } from '@tresjs/core';
-import { createCubeMarker } from 'stellex-galaxy-sandbox/view/CubeMarker';
+import { createCubeMarker } from 'galex-js/view/CubeMarker';
 
 const marker = createCubeMarker(2, { color: 0x7fff9f });
 

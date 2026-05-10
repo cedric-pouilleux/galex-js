@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: Stellex Galaxy
+  name: GalexJS
   tagline: Génération procédurale déterministe d'un plateau galactique, partagée serveur ↔ client
   actions:
     - theme: brand

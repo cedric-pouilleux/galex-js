@@ -7,7 +7,7 @@ import {
   LIGHT_YEARS_PER_CUBE,
   lightYearsPerUnit,
   worldUnitsToLightYears,
-} from 'stellex-galaxy-sandbox/core/Astronomy';
+} from 'galex-js/core/Astronomy';
 ```
 
 ## Convention
@@ -31,8 +31,8 @@ Pour les défauts (`radius = 50`, `cubeSize = 2`) : 25 cubes de rayon × 50 al =
 ## Exemple
 
 ```ts
-import { starDistance } from 'stellex-galaxy-sandbox/core/StarNeighbors';
-import { worldUnitsToLightYears } from 'stellex-galaxy-sandbox/core/Astronomy';
+import { starDistance } from 'galex-js/core/StarNeighbors';
+import { worldUnitsToLightYears } from 'galex-js/core/Astronomy';
 
 const dist = starDistance(galaxy.data.positions, a, b);
 const distLy = worldUnitsToLightYears(galaxy.opts.cubeSize, dist);

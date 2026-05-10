@@ -7,7 +7,7 @@ La lib expose **trois cibles consommables**. Choisis ton onglet et copie-colle :
 Pas de Three, pas de DOM. Le serveur charge `core/` et déduit la structure d'une galaxie depuis un seed.
 
 ```ts
-import { createGalaxyData } from 'stellex-galaxy-sandbox/core/GalaxyData';
+import { createGalaxyData } from 'galex-js/core/GalaxyData';
 
 const galaxy = createGalaxyData({ seed: 42, count: 15000, radius: 50 });
 
@@ -34,8 +34,8 @@ Même galaxie, deux façons de la monter dans un canvas. Les deux produisent un 
 
 ```ts [Vanilla Three]
 import * as THREE from 'three';
-import { createGalaxyData } from 'stellex-galaxy-sandbox/core/GalaxyData';
-import { createGalaxyScene } from 'stellex-galaxy-sandbox/view/GalaxyScene';
+import { createGalaxyData } from 'galex-js/core/GalaxyData';
+import { createGalaxyScene } from 'galex-js/view/GalaxyScene';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -62,8 +62,8 @@ animate();
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { TresCanvas } from '@tresjs/core';
-import { createGalaxyData } from 'stellex-galaxy-sandbox/core/GalaxyData';
-import { GalaxyScene } from 'stellex-galaxy-sandbox/view-vue';
+import { createGalaxyData } from 'galex-js/core/GalaxyData';
+import { GalaxyScene } from 'galex-js/view-vue';
 
 const galaxy = createGalaxyData({ seed: 42, count: 15000, radius: 50 });
 
@@ -97,7 +97,7 @@ Le plugin Vue de Vite doit être configuré avec `templateCompilerOptions` de `@
 ## Installation
 
 ```bash
-npm install stellex-galaxy-sandbox three
+npm install galex-js three
 # Pour la cible Vue / TresJS uniquement :
 npm install vue @tresjs/core
 ```

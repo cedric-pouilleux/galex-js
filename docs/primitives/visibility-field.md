@@ -37,7 +37,7 @@ Passer `null` ou `undefined` rétablit `aVisibility = 1` partout (clear).
 ::: code-group
 
 ```ts [Vanilla Three]
-import { createGalaxyScene } from 'stellex-galaxy-sandbox/view/GalaxyScene';
+import { createGalaxyScene } from 'galex-js/view/GalaxyScene';
 
 const galaxyScene = createGalaxyScene(galaxy);
 
@@ -52,7 +52,7 @@ galaxyScene.setVisibilityField(null);   // clear
 
 ```vue [Vue / TresJS]
 <script setup lang="ts">
-import { useGalaxyView } from 'stellex-galaxy-sandbox/view-vue';
+import { useGalaxyView } from 'galex-js/view-vue';
 
 const view = useGalaxyView(galaxy);
 
@@ -82,7 +82,7 @@ function clearFog() {
 ## createVisibilityFieldLines {#createvisibilityfieldlines}
 
 ```ts
-import { createVisibilityFieldLines } from 'stellex/view/GridHelper.js';
+import { createVisibilityFieldLines } from 'galex-js/view/GridHelper';
 
 createVisibilityFieldLines(grid, focals, opts?): THREE.Group
 ```
@@ -105,7 +105,7 @@ Le wireframe est statique : il faut le re-builder dès que `focals` ou `range` c
 ::: code-group
 
 ```ts [Vanilla Three]
-import { createVisibilityFieldLines } from 'stellex-galaxy-sandbox/view/GridHelper';
+import { createVisibilityFieldLines } from 'galex-js/view/GridHelper';
 
 let fieldLines: THREE.Group | null = null;
 
@@ -130,8 +130,8 @@ function applyFog(focals: { i: number; k: number }[], range = 3) {
 ```vue [Vue / TresJS]
 <script setup lang="ts">
 import { computed, watch, shallowRef } from 'vue';
-import { createVisibilityFieldLines } from 'stellex-galaxy-sandbox/view/GridHelper';
-import { useGalaxyView } from 'stellex-galaxy-sandbox/view-vue';
+import { createVisibilityFieldLines } from 'galex-js/view/GridHelper';
+import { useGalaxyView } from 'galex-js/view-vue';
 
 const props = defineProps<{
   focals: { i: number; k: number }[];
@@ -168,7 +168,7 @@ watch(
 Helper pur, exporté depuis `core/visibility.ts`. Aucune dépendance Three — testable en Node, utilisable côté serveur.
 
 ```ts
-import { computeVisibilityField } from 'stellex/core/visibility.js';
+import { computeVisibilityField } from 'galex-js/core/Visibility';
 
 computeVisibilityField(
   positions: Float32Array,    // flat XYZ buffer
@@ -187,7 +187,7 @@ Bit-stable (uniquement `+ - * < / floor`). Le caller fournit `out` pour éviter 
 Helper pur qui projette les focals sur la grille, retourne une `Map<cubeKey, 0 | 1>`. Utile pour piloter du rendu wireframe ou pour des décisions gameplay côté serveur (« quels cubes ce joueur peut-il voir cette frame ? »).
 
 ```ts
-import { tierMapForVisibilityField } from 'stellex/core/visibility.js';
+import { tierMapForVisibilityField } from 'galex-js/core/Visibility';
 
 tierMapForVisibilityField(
   focals: { i: number; k: number; j?: number }[],
@@ -203,8 +203,8 @@ tierMapForVisibilityField(
 Cas typique : le serveur reçoit une action « scanner le cube X » et doit répondre `granted | denied` selon les sondes du joueur. Aucun render à monter — `tierMapForVisibilityField` suffit.
 
 ```ts
-import { createGalaxyData } from 'stellex-galaxy-sandbox/core/GalaxyData';
-import { tierMapForVisibilityField } from 'stellex-galaxy-sandbox/core/Visibility';
+import { createGalaxyData } from 'galex-js/core/GalaxyData';
+import { tierMapForVisibilityField } from 'galex-js/core/Visibility';
 
 type Player = { probes: { i: number; k: number }[]; sensorRange: number };
 

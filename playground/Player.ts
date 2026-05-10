@@ -2,7 +2,7 @@ import { mulberry32, deriveSubseed } from '../core/Random.js';
 import type { GalaxyData } from '../core/GalaxyData.js';
 import type { Cube } from '../core/CubeGrid.js';
 
-export const PLAYER_NAME = 'Stellex Prime';
+export const PLAYER_NAME = 'Galex Prime';
 export const PLAYER_COLOR_HEX = 0x7fff9f;
 export const PLAYER_HIGHLIGHT_RGB: [number, number, number] = [0.55, 1.0, 0.65];
 

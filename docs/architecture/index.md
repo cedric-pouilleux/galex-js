@@ -45,9 +45,9 @@ La lib expose trois entry points indépendants — un consommateur prend ce dont
 
 | Cible | Entry | Deps requises |
 |---|---|---|
-| **Backend Node** | `stellex/core/*` | aucune (pas de Three, pas de DOM) |
-| **Vanilla Three** | `stellex/view/*`, `stellex/view/effects/*` | `three` (peer) |
-| **Vue / TresJS** | `stellex/view-vue` | `three`, `vue`, `@tresjs/core` (peers, deux derniers optionnels) |
+| **Backend Node** | `galex-js/core/*` | aucune (pas de Three, pas de DOM) |
+| **Vanilla Three** | `galex-js/view/*`, `galex-js/view/effects/*` | `three` (peer) |
+| **Vue / TresJS** | `galex-js/view-vue` | `three`, `vue`, `@tresjs/core` (peers, deux derniers optionnels) |
 
 Validés respectivement par : `npm run example:server` (Node), `npm run dev` (vanilla browser), et `npm test` qui couvre la chaîne Vue de bout en bout via les tests `view-vue/composables/*.test.ts`.
 

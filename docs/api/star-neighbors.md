@@ -8,7 +8,7 @@ import {
   starDistanceSq,
   nearestStars,
   starsWithinRadius,
-} from 'stellex-galaxy-sandbox/core/StarNeighbors';
+} from 'galex-js/core/StarNeighbors';
 ```
 
 ## Pourquoi côté lib ?
@@ -79,7 +79,7 @@ Box-scan : on calcule l'AABB cube de la sphère, on visite uniquement les cubes 
 Les distances retournées par ces fonctions sont en **unités monde** — le même repère que `data.positions`. Pour les afficher en années-lumière, voir [`Astronomy`](./astronomy) :
 
 ```ts
-import { worldUnitsToLightYears } from 'stellex-galaxy-sandbox/core/Astronomy';
+import { worldUnitsToLightYears } from 'galex-js/core/Astronomy';
 
 const distLy = worldUnitsToLightYears(galaxy.opts.cubeSize, starDistance(galaxy.data.positions, a, b));
 ```

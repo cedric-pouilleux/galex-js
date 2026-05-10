@@ -6,8 +6,8 @@ Construit la scène Three impérative à partir d'un `GalaxyData`. Compose toute
 
 ```ts [Vanilla Three]
 import * as THREE from 'three';
-import { createGalaxyScene } from 'stellex-galaxy-sandbox/view/GalaxyScene';
-import type { GalaxyScene, GalaxySceneOptions } from 'stellex-galaxy-sandbox/view/GalaxyScene';
+import { createGalaxyScene } from 'galex-js/view/GalaxyScene';
+import type { GalaxyScene, GalaxySceneOptions } from 'galex-js/view/GalaxyScene';
 
 const view = createGalaxyScene(galaxy, { gasDensity: 1.0 });
 scene.add(view.object3D);
@@ -19,7 +19,7 @@ view.setGasDim(0.45);
 
 ```vue [Vue / TresJS]
 <script setup lang="ts">
-import { useGalaxyView } from 'stellex-galaxy-sandbox/view-vue';
+import { useGalaxyView } from 'galex-js/view-vue';
 
 // Wraps createGalaxyScene + exposes its setters as reactive refs.
 const view = useGalaxyView(galaxy, { gasDensity: 1.0 });

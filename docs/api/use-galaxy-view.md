@@ -3,7 +3,7 @@
 Composable Vue **impératif réactif** : wrap `createGalaxyScene` (vanilla) et expose chaque contrôle comme `Ref<T>` Vue. Mute la ref → la scène met à jour à la frame suivante. Cleanup automatique à l'unmount via `onScopeDispose`.
 
 ```ts
-import { useGalaxyView } from 'stellex-galaxy-sandbox/view-vue';
+import { useGalaxyView } from 'galex-js/view-vue';
 
 const view = useGalaxyView(galaxyData);
 view.dimming.value = 0.3;
@@ -69,8 +69,8 @@ Watcher Vue interne (post-flush par défaut) : pas de surcoût pendant les chang
 <script setup lang="ts">
 import { TresCanvas } from '@tresjs/core';
 import * as THREE from 'three';
-import { createGalaxyData } from 'stellex-galaxy-sandbox/core/GalaxyData';
-import { useGalaxyView } from 'stellex-galaxy-sandbox/view-vue';
+import { createGalaxyData } from 'galex-js/core/GalaxyData';
+import { useGalaxyView } from 'galex-js/view-vue';
 
 const galaxy = createGalaxyData({ seed: 42, count: 15000, radius: 50 });
 const view = useGalaxyView(galaxy);

@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress';
 import { templateCompilerOptions } from '@tresjs/core';
 
 export default defineConfig({
-  title: 'Stellex Galaxy',
+  title: 'GalexJS',
   description: 'Procedural deterministic galaxy library',
   lang: 'fr-FR',
   base: '/',

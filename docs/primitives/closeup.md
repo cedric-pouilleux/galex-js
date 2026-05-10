@@ -13,8 +13,8 @@ La lib expose **trois primitives neutres** pour bâtir une vue rapprochée d'un 
 ::: code-group
 
 ```ts [Vanilla Three]
-import { prepareCloseupField } from 'stellex-galaxy-sandbox/view/closeup/Buffers';
-import { createHoverRing } from 'stellex-galaxy-sandbox/view/closeup/HoverRing';
+import { prepareCloseupField } from 'galex-js/view/closeup/Buffers';
+import { createHoverRing } from 'galex-js/view/closeup/HoverRing';
 
 const field = prepareCloseupField(cube, galaxyData, highlight);
 if (field) galaxyScene.object3D.add(field.points);
@@ -27,8 +27,8 @@ hoverRing.showOn(field.points, starIndex, camera, field.temps[starIndex]);
 ```vue [Vue / TresJS]
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { prepareCloseupField } from 'stellex-galaxy-sandbox/view/closeup/Buffers';
-import { createHoverRing } from 'stellex-galaxy-sandbox/view/closeup/HoverRing';
+import { prepareCloseupField } from 'galex-js/view/closeup/Buffers';
+import { createHoverRing } from 'galex-js/view/closeup/HoverRing';
 
 const props = defineProps<{ cube: Cube; highlight?: CloseupHighlight }>();
 const field = ref(prepareCloseupField(props.cube, galaxyData, props.highlight ?? null));
@@ -89,8 +89,8 @@ Le hover ring exposé par `createHoverRing` est purement visuel : c'est au calle
 ::: code-group
 
 ```ts [Vanilla Three]
-import { prepareCloseupField } from 'stellex-galaxy-sandbox/view/closeup/Buffers';
-import { createHoverRing } from 'stellex-galaxy-sandbox/view/closeup/HoverRing';
+import { prepareCloseupField } from 'galex-js/view/closeup/Buffers';
+import { createHoverRing } from 'galex-js/view/closeup/HoverRing';
 
 const field = prepareCloseupField(cube, galaxyData);
 if (!field) throw new Error('empty cube');
@@ -122,8 +122,8 @@ renderer.domElement.addEventListener('pointermove', (ev) => {
 import { onMounted, onBeforeUnmount, shallowRef } from 'vue';
 import * as THREE from 'three';
 import { useTresContext } from '@tresjs/core';
-import { prepareCloseupField } from 'stellex-galaxy-sandbox/view/closeup/Buffers';
-import { createHoverRing } from 'stellex-galaxy-sandbox/view/closeup/HoverRing';
+import { prepareCloseupField } from 'galex-js/view/closeup/Buffers';
+import { createHoverRing } from 'galex-js/view/closeup/HoverRing';
 
 const props = defineProps<{ cube: Cube }>();
 const { camera, renderer } = useTresContext();
@@ -171,8 +171,8 @@ Un exemple complet de référence vit dans le playground :
 
 | Fichier | Rôle |
 |---|---|
-| [`playground/Closeup.ts`](https://github.com/.../playground/Closeup.ts) | Compose les primitives + tween caméra + dim/clip via `GalaxyScene` |
-| [`playground/CloseupTween.ts`](https://github.com/.../playground/CloseupTween.ts) | Tween rAF easeOutCubic (couplé à `OrbitControls`) |
+| [`playground/Closeup.ts`](https://github.com/cedric-pouilleux/galex-js/blob/main/playground/Closeup.ts) | Compose les primitives + tween caméra + dim/clip via `GalaxyScene` |
+| [`playground/CloseupTween.ts`](https://github.com/cedric-pouilleux/galex-js/blob/main/playground/CloseupTween.ts) | Tween rAF easeOutCubic (couplé à `OrbitControls`) |
 
 Squelette d'orchestrateur :
 
@@ -202,7 +202,7 @@ Le sous-buffer du close-up alloue ses propres `BufferGeometry` + `ShaderMaterial
 ::: code-group
 
 ```ts [Vanilla Three]
-import type { CloseupField } from 'stellex-galaxy-sandbox/view/closeup/Buffers';
+import type { CloseupField } from 'galex-js/view/closeup/Buffers';
 
 let active: CloseupField | null = null;
 
@@ -222,8 +222,8 @@ function exit() {
 <script setup lang="ts">
 import { watch, onBeforeUnmount, shallowRef } from 'vue';
 import * as THREE from 'three';
-import { prepareCloseupField } from 'stellex-galaxy-sandbox/view/closeup/Buffers';
-import type { CloseupField } from 'stellex-galaxy-sandbox/view/closeup/Buffers';
+import { prepareCloseupField } from 'galex-js/view/closeup/Buffers';
+import type { CloseupField } from 'galex-js/view/closeup/Buffers';
 
 const props = defineProps<{ cube: Cube | null }>();
 const field = shallowRef<CloseupField | null>(null);

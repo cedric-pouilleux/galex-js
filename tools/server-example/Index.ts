@@ -69,7 +69,7 @@ function validateActionTargetsCube(world: World, action: Action): ValidationResu
 
 // ── Demo run ─────────────────────────────────────────────────────────────────
 
-console.log('=== Stellex backend example ===\n');
+console.log('=== GalexJS backend example ===\n');
 
 const t0 = performance.now();
 const galaxy = getGalaxy(WORLD);

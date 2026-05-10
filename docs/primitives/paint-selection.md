@@ -9,7 +9,7 @@ Sélection multi-cubes en mode peinture. Le drag démarre sur un cube → le ges
 ## Signature
 
 ```ts
-import { createPaintSelection } from 'stellex-galaxy-sandbox/playground/PaintSelection';
+import { createPaintSelection } from 'galex-js/playground/PaintSelection';
 
 createPaintSelection(deps: PaintSelectionDeps): PaintSelection;
 
@@ -87,7 +87,7 @@ Le composable vit aussi longtemps que la page — il survit aux régénérations
 
 ## Exemple d'intégration
 
-Extrait de [`playground/Main.ts`](https://github.com/.../playground/Main.ts) — montre le wiring complet avec le `Picker`, le `Closeup` et le fog of war.
+Extrait de [`playground/Main.ts`](https://github.com/cedric-pouilleux/galex-js/blob/main/playground/Main.ts) — montre le wiring complet avec le `Picker`, le `Closeup` et le fog of war.
 
 ```ts
 const paintSelection = createPaintSelection({

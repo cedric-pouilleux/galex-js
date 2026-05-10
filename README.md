@@ -1,41 +1,43 @@
-# Stellex Galaxy
+# GalexJS
 
-Génération procédurale **déterministe** d'un plateau galactique. Une seule lib, trois cibles consommables :
+Génération procédurale **déterministe** d'un plateau galactique. Une lib, trois cibles :
 
-- **Backend Node** — pure data, pas de Three, pas de DOM.
+- **Backend Node** — pure data, ni Three, ni DOM.
 - **Vanilla Three.js** — factories impératives qui montent les couches dans un `THREE.Group`.
 - **Vue 3 + TresJS** — composable réactif + composant drop-in `<GalaxyScene>`.
 
-Pour le même `(seed, opts)`, la lib produit des `Float32Array` **byte-à-byte identiques** sur V8, SpiderMonkey et JavaScriptCore — donc le serveur (Node) et le client (Chrome/Firefox/Safari) voient la même galaxie sans payload de structure sur le réseau.
+Pour le même `(seed, opts)`, la lib produit des `Float32Array` **byte-à-byte identiques** sur V8, SpiderMonkey et JavaScriptCore. Donc le serveur (Node) et le client (Chrome / Firefox / Safari) voient la même galaxie sans payload de structure sur le réseau — seules les actions joueur transitent.
 
-## Cibles
+## Pourquoi déterministe
 
-| Cible | Entry | Exemple |
-|---|---|---|
-| Backend Node | `stellex-galaxy-sandbox/core/GalaxyData` | `tools/server-example/Index.ts` |
-| Vanilla Three | `stellex-galaxy-sandbox/view/GalaxyScene` | `playground/Main.ts` |
-| Vue / TresJS | `stellex-galaxy-sandbox/view-vue` | [Quick start](docs/quick-start.md) (code-group Vue) |
+Les jeux multi avec carte massive partagent traditionnellement la map en envoyant un dump des positions / cubes / contenus à la connexion. Avec GalexJS le serveur dérive la map depuis `(seed, opts)` ; le client la dérive aussi côté navigateur, à partir du même seed reçu en plaintext. Tous les bytes sont identiques cross-engine, donc :
+
+- **Pas de protocole de sync** pour la structure du monde
+- **Validation serveur** sans recharger d'état (le serveur reconstruit le cube cible à la volée)
+- **Anti-triche** trivial : si le client envoie un `(cube, star)` qui n'existe pas sur le seed, le serveur le sait
+
+La compatibilité cross-engine repose sur de la math transcendante bit-stable (`detSin`, `detCos`, `detPow`…) auditée par un linter statique + un test hash byte-à-byte exécuté en CI sur Chromium / Firefox / WebKit.
 
 ## Installation
 
 ```bash
-npm install stellex-galaxy-sandbox three
+npm install galex-js three
 # Pour la cible Vue / TresJS :
 npm install vue @tresjs/core
 ```
 
-`three`, `vue` et `@tresjs/core` sont des **peer dependencies**. Vue et TresJS sont optionnelles (utilisées uniquement par `view-vue/`).
+`three`, `vue` et `@tresjs/core` sont des **peer dependencies**. Vue et TresJS sont optionnelles (consommées uniquement par `view-vue/`).
 
-## Usage rapide
+## Usage par cible
 
-### Backend Node
+### Backend Node — pure data
 
 ```ts
-import { createGalaxyData } from 'stellex-galaxy-sandbox/core/GalaxyData';
+import { createGalaxyData } from 'galex-js/core/GalaxyData';
 
 const galaxy = createGalaxyData({ seed: 42, count: 15000, radius: 50 });
 
-// Validate a client action against the seed-derived structure.
+// Valider une action joueur sans charger d'état persistant.
 const cube = galaxy.grid.get(action.cube.i, 0, action.cube.k);
 if (!cube) return { ok: false, reason: 'cube does not exist' };
 if (!cube.starIndices.includes(action.starIndex)) {
@@ -44,32 +46,34 @@ if (!cube.starIndices.includes(action.starIndex)) {
 return { ok: true };
 ```
 
-### Vanilla Three
+### Vanilla Three — scène montée à la main
 
 ```ts
 import * as THREE from 'three';
-import { createGalaxyData } from 'stellex-galaxy-sandbox/core/GalaxyData';
-import { createGalaxyScene } from 'stellex-galaxy-sandbox/view/GalaxyScene';
+import { createGalaxyData } from 'galex-js/core/GalaxyData';
+import { createGalaxyScene } from 'galex-js/view/GalaxyScene';
 
 const galaxy = createGalaxyData({ seed: 42, count: 15000, radius: 50 });
 const view = createGalaxyScene(galaxy, { gasDensity: 1.0 });
 scene.add(view.object3D);
 
-// Per-frame controls available:
-view.setDimming(0.5);            // global dim
-view.setGasDim(0.45);            // gas-only dim (top-down view trick)
-view.setOrthoSize(zoom);         // sprite size for ortho camera
-view.setClipping(true, normal, point);
-view.setVisibilityField({ focals: [{ i, k }], range: 3 });
+// Per-frame controls :
+view.setDimming(0.5);                              // dim global (close-up)
+view.setGasDim(0.45);                              // dim gaz seul (plan view)
+view.setHaloVisible(false);                        // halo doux (fog of war)
+view.setCoreVisible(false);                        // noyau galactique (fog of war)
+view.setOrthoSize(zoom);                           // sprite size en mode ortho
+view.setClipping(true, normal, point);             // plan de clipping monde
+view.setVisibilityField({ focals: [cube], range: 3 });  // brouillard multi-focal
 ```
 
-### Vue / TresJS
+### Vue / TresJS — déclaratif
 
 ```vue
 <script setup lang="ts">
 import { TresCanvas } from '@tresjs/core';
-import { createGalaxyData } from 'stellex-galaxy-sandbox/core/GalaxyData';
-import { GalaxyScene } from 'stellex-galaxy-sandbox/view-vue';
+import { createGalaxyData } from 'galex-js/core/GalaxyData';
+import { GalaxyScene } from 'galex-js/view-vue';
 
 const galaxy = createGalaxyData({ seed: 42, count: 15000, radius: 50 });
 </script>
@@ -82,7 +86,7 @@ const galaxy = createGalaxyData({ seed: 42, count: 15000, radius: 50 });
 </template>
 ```
 
-⚠️ Côté `vite.config.ts`, **utiliser la conf TresJS** sinon `<TresCanvas>` est rendu comme un custom HTML element vide :
+⚠️ Côté `vite.config.ts`, brancher la conf TresJS sinon `<TresCanvas>` est rendu comme un custom HTML element vide :
 
 ```ts
 import { templateCompilerOptions } from '@tresjs/core';
@@ -93,32 +97,85 @@ export default defineConfig({
 });
 ```
 
-Voir [docs/integrations/vue-tres.md](docs/integrations/vue-tres.md) pour le détail.
+## Le sandbox
+
+`npm run dev` lance le playground complet. Il sert d'exemple de référence : tout est composé à partir des primitives lib, aucun concept de jeu n'est codé dedans.
+
+| Geste / mode | Effet |
+|---|---|
+| Clic gauche **dans le vide** + drag | Rotation orbite |
+| Clic droit + drag | Rotation orbite (alternative) |
+| Clic gauche **sur un cube** + drag | Sélection multi-cubes (peinture, cf. [PaintSelection](docs/primitives/paint-selection.md)) |
+| Clic court sur un cube | Close-up sur le cube |
+| Relâcher d'une peinture | Close-up sur tous les cubes peints (champ d'étoiles fusionné) |
+| Molette | Zoom |
+| `Esc` | Sortir du close-up |
+| Toggle « Brouillard de guerre » | Active le visibility-field multi-focal + masque halo + noyau galactique |
+| Toggle « Vue plateau 2D » | Bascule en caméra orthographique vue de dessus |
+| Toggle « Mesurer une distance » | Active le [MeasureTool](docs/primitives/measure-tool.md) — cube↔cube en orbite, étoile↔étoile en close-up |
+| Panneau « Génération » | Régénère la galaxie avec d'autres options (count, bras, étalement, gaz, …) |
+
+La galaxie reste **toujours centrée** (`enablePan = false` sur les `OrbitControls`) — le pan est désactivé exprès pour éviter qu'elle dérive hors champ.
+
+## Architecture
+
+```
+core/           # Pure data, déterministe, sans Three
+  GalaxyData      # Pipeline principal seed → buffers + grid
+  CubeGrid        # Indexation spatiale + raycast Amanatides & Woo
+  Astronomy       # Conversion world units ↔ années-lumière
+  Random          # mulberry32 + dérivation de subseeds par label
+  DetMath         # Math transcendantes bit-stables (sin, cos, log, exp, pow)
+  Visibility      # Helper de calcul de fog of war
+
+view/           # Vanilla Three — couches visuelles
+  GalaxyScene     # Compose tout (stars + halo + gaz + bulbe), expose les contrôles
+  CubeMarker      # Marqueur cube pour le concept "joueur" / "flotte" du client
+  GridHelper      # Wireframes (occupied lines, visibility tiers)
+  closeup/        # Sous-buffer + shader haute fidélité pour la vue rapprochée
+  effects/        # Halo, nébuleuses, arm glow, gas streaks, inner ring, center dust
+
+view-vue/       # Vue + TresJS
+  composables/    # useGalaxyView (réactif), useGalaxyLayers (déclaratif)
+  components/     # <GalaxyScene> drop-in
+
+playground/     # Sandbox de démo (consomme les briques ci-dessus)
+  Main.ts, Cameras, Picker, PaintSelection, MeasureTool, Fog, PlanView, Closeup…
+
+tools/          # CLI utilitaires
+  CheckDeterminism  # Lint statique : interdit Math.sin/cos/etc dans core/
+  server-example    # Exemple de validation serveur Node
+
+docs/           # VitePress
+```
 
 ## Garanties
 
-- **Déterminisme cross-engine** : audité par `tools/CheckDeterminism.ts` (lint statique) + tests Node + Playwright sur Chromium / Firefox / WebKit.
+- **Déterminisme cross-engine** : audité par [`tools/CheckDeterminism.ts`](tools/CheckDeterminism.ts) (lint statique sur `core/`) + tests Node + Playwright sur Chromium / Firefox / WebKit.
 - **TypeScript strict** : tout le repo passe `vue-tsc --noEmit`.
-- **Domaine jeu hors lib** : aucun identifiant `player` / `team` / `fleet` / `fog of war` dans `core/`, `view/`, `view-vue/`. Les primitives sont neutres ; le client jeu compose ses concepts par-dessus.
+- **Domaine jeu hors lib** : aucun identifiant `player` / `team` / `fleet` / `fog of war` dans `core/`, `view/`, `view-vue/`. Les primitives sont neutres ; le client jeu compose ses concepts par-dessus (cf. [primitives/](docs/primitives/index.md)).
+- **Vocabulaire de plateau** : `cube`, `grid`, `world`, `marker`, `highlight`, `selection`, `hover`, `visibility`, `focal`, `range`, `closeup`, `plan view`.
 
 ## Scripts
 
 ```bash
-npm run dev               # Vanilla Three playground
-npm run example:server    # Backend Node example
-npm run build             # Build statique
-npm test                  # Typecheck strict + lint déterminisme + 56 tests
+npm run dev               # Playground vanilla Three
+npm run example:server    # Exemple backend Node (validation déterministe)
+npm run build             # Build de production (Vite)
+npm test                  # typecheck strict + lint déterminisme + 72 tests
 npm run test:cross        # Hash determinism sur Chromium / Firefox / WebKit
-npm run docs:dev          # VitePress doc site
+npm run docs:dev          # Site VitePress en hot-reload
+npm run docs:build        # Build statique des docs
 ```
 
 ## Documentation
 
-- [Quick start](docs/quick-start.md)
-- [Architecture](docs/architecture/index.md)
-- [Compatibilité cross-engine](docs/compatibility/index.md)
-- [Primitives de plateau](docs/primitives/index.md)
-- [Intégration Vue / TresJS](docs/integrations/vue-tres.md)
+- [Quick start](docs/quick-start.md) — premier usage côté Node, vanilla Three, Vue
+- [Architecture](docs/architecture/index.md) — pipeline data → buffers → scène, 3 niveaux d'API
+- [Compatibilité cross-engine](docs/compatibility/index.md) — pourquoi le déterminisme bit-stable tient
+- [Primitives de plateau](docs/primitives/index.md) — `CubeMarker`, `VisibilityField`, `Closeup`, et les compositions sandbox ([PaintSelection](docs/primitives/paint-selection.md), [MeasureTool](docs/primitives/measure-tool.md))
+- [Référence API](docs/api/index.md) — entrée par symbole exporté
+- [Intégration Vue / TresJS](docs/integrations/vue-tres.md) — patterns réactifs
 
 ## Licence
 

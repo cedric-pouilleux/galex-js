@@ -59,7 +59,8 @@
       "Bash(npm ci *)",
       "Bash(GITHUB_PAGES=true npm run build)",
       "Bash(git -C \"d:/dev/stellex-galaxy-sandbox\" remote get-url origin)",
-      "Bash(npx vue-tsc *)"
+      "Bash(npx vue-tsc *)",
+      "PowerShell(npx tsx tools/Benchmark.ts)"
     ]
   }
 }

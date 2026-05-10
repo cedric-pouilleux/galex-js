@@ -9,8 +9,8 @@ Un exemple Node minimal vit dans `tools/server-example/index.ts` et s'exécute v
 ## Surface publique
 
 ```ts
-import { createGalaxyData } from 'stellex/core/galaxy-data.js';
-import type { GalaxyData } from 'stellex/core/galaxy-data.js';
+import { createGalaxyData } from 'galex-js/core/GalaxyData';
+import type { GalaxyData } from 'galex-js/core/GalaxyData';
 ```
 
 `createGalaxyData` est l'unique entrée serveur. Le `GalaxyData` retourné expose :
@@ -28,8 +28,8 @@ import type { GalaxyData } from 'stellex/core/galaxy-data.js';
 Pattern type : le client envoie une action référençant un cube + une étoile. Le serveur reconstruit la galaxie à la volée (ou la cache en RAM, immutable) et valide :
 
 ```ts
-import { createGalaxyData } from 'stellex/core/galaxy-data.js';
-import type { GalaxyData, GalaxyDataOptions } from 'stellex/core/galaxy-data.js';
+import { createGalaxyData } from 'galex-js/core/GalaxyData';
+import type { GalaxyData, GalaxyDataOptions } from 'galex-js/core/GalaxyData';
 
 const galaxyCache = new Map<number, GalaxyData>();
 

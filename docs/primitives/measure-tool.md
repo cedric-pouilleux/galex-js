@@ -9,7 +9,7 @@ Outil de mesure à deux ancres. En orbite il mesure des **centres de cubes** ; d
 ## Signature
 
 ```ts
-import { createMeasureTool } from 'stellex-galaxy-sandbox/playground/MeasureTool';
+import { createMeasureTool } from 'galex-js/playground/MeasureTool';
 
 createMeasureTool(): MeasureTool;
 
@@ -120,7 +120,7 @@ w.galaxyScene.object3D.add(measureTool.object3D);
 
 ## Exemple d'intégration
 
-Extrait de [`playground/Main.ts`](https://github.com/.../playground/Main.ts) :
+Extrait de [`playground/Main.ts`](https://github.com/cedric-pouilleux/galex-js/blob/main/playground/Main.ts) :
 
 ```ts
 const measureTool = createMeasureTool();

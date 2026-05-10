@@ -36,8 +36,8 @@ Sans `templateCompilerOptions`, le compilateur Vue traite **tous** les `<TresXxx
 ```vue
 <script setup lang="ts">
 import { TresCanvas } from '@tresjs/core';
-import { createGalaxyData } from 'stellex-galaxy-sandbox/core/GalaxyData';
-import { GalaxyScene } from 'stellex-galaxy-sandbox/view-vue';
+import { createGalaxyData } from 'galex-js/core/GalaxyData';
+import { GalaxyScene } from 'galex-js/view-vue';
 
 const galaxy = createGalaxyData({ seed: 42, count: 15000, radius: 50 });
 </script>
@@ -58,8 +58,8 @@ Passer un `Ref<GalaxyData>` régénère les buffers automatiquement quand le see
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { TresCanvas } from '@tresjs/core';
-import { createGalaxyData } from 'stellex-galaxy-sandbox/core/GalaxyData';
-import { GalaxyScene } from 'stellex-galaxy-sandbox/view-vue';
+import { createGalaxyData } from 'galex-js/core/GalaxyData';
+import { GalaxyScene } from 'galex-js/view-vue';
 
 const seed = ref(42);
 const galaxy = computed(() => createGalaxyData({ seed: seed.value, count: 15000, radius: 50 }));
@@ -110,8 +110,8 @@ function reroll() {
 <script setup lang="ts">
 import { TresCanvas } from '@tresjs/core';
 import * as THREE from 'three';
-import { createGalaxyData } from 'stellex-galaxy-sandbox/core/GalaxyData';
-import { useGalaxyView } from 'stellex-galaxy-sandbox/view-vue';
+import { createGalaxyData } from 'galex-js/core/GalaxyData';
+import { useGalaxyView } from 'galex-js/view-vue';
 
 const galaxy = createGalaxyData({ seed: 42, count: 15000, radius: 50 });
 const view = useGalaxyView(galaxy);
@@ -166,7 +166,7 @@ Si `<GalaxyScene>` ne convient pas (besoin de monter chaque couche différemment
 
 ```vue
 <script setup lang="ts">
-import { useGalaxyLayers } from 'stellex-galaxy-sandbox/view-vue';
+import { useGalaxyLayers } from 'galex-js/view-vue';
 
 const layers = useGalaxyLayers(() => galaxyData);
 </script>
@@ -191,16 +191,16 @@ const layers = useGalaxyLayers(() => galaxyData);
 
 ```ts
 // Le composant drop-in
-import { GalaxyScene } from 'stellex-galaxy-sandbox/view-vue';
+import { GalaxyScene } from 'galex-js/view-vue';
 
 // Le composable seul (utile si tu fais ton propre montage)
-import { useGalaxyLayers } from 'stellex-galaxy-sandbox/view-vue';
+import { useGalaxyLayers } from 'galex-js/view-vue';
 
 // Les types pour typer ton propre code
 import type {
   GalaxyLayers, GalaxyLayersOptions,
   StarLayer, PointsLayer, HaloLayer, CenterDustLayer,
-} from 'stellex-galaxy-sandbox/view-vue';
+} from 'galex-js/view-vue';
 ```
 
 ## Granularité de mise à jour
