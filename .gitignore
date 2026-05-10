@@ -3,3 +3,29 @@ dist
 .vite
 *.log
 .DS_Store
+
+# Build outputs
+dist
+.vite
+docs/.vitepress/dist
+docs/.vitepress/cache
+
+# Tests
+test-results
+playwright-report
+playwright/.cache
+coverage
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea
+*.swp
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+.claude

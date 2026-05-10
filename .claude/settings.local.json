@@ -54,7 +54,10 @@
       "Bash(curl -sS \"http://localhost:5174/@fs/D:/dev/stellex-galaxy-sandbox/docs/.vitepress/theme/components/GalaxyDemo.vue\")",
       "Bash(cp /tmp/check_demos.mjs ./check_demos.mjs)",
       "Bash(node ./check_demos.mjs)",
-      "Bash(node ./screenshot.mjs)"
+      "Bash(node ./screenshot.mjs)",
+      "Bash(git -C \"d:/dev/stellex-galaxy-sandbox\" remote -v)",
+      "Bash(npm ci *)",
+      "Bash(GITHUB_PAGES=true npm run build)"
     ]
   }
 }
