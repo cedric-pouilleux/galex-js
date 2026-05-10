@@ -314,6 +314,24 @@ canvas#view:active { cursor: grabbing; }
   pointer-events: none;
 }
 
+.measure-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  background: rgba(8, 12, 22, 0.85);
+  border: 1px solid rgba(108, 242, 255, 0.55);
+  color: #cfe6ff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 0 14px rgba(108, 242, 255, 0.25);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  transform: translate(-50%, -50%);
+}
+
 #legend {
   bottom: 16px;
   left: 16px;

@@ -7,6 +7,8 @@ Vue d'ensemble des entrées publiques de la lib, classées par cible.
 | Symbole | Rôle |
 |---|---|
 | [`createGalaxyData`](./galaxy-data) | Entrée principale côté données. Déterministe pour un `(seed, opts)`. |
+| [`starDistance`, `nearestStars`, `starsWithinRadius`](./star-neighbors) | Requêtes de proximité spatiale entre étoiles via la `CubeGrid`. |
+| [`LIGHT_YEARS_PER_CUBE`, `lightYearsPerUnit`, `worldUnitsToLightYears`](./astronomy) | Conversion des unités monde en années-lumière (1 cube = 50 al). |
 | `mulberry32`, `deriveSubseed` | PRNG seedé + dérivation de subseeds par label (utile pour étendre le pipeline). |
 | `detSin`, `detCos`, `detLog`, `detExp`, `detPow` | Math transcendantes bit-stables cross-engine. |
 | `computeVisibilityField`, `tierMapForVisibilityField` | Helpers purs de visibilité (pour décisions gameplay côté serveur). |

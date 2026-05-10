@@ -32,7 +32,7 @@ export type Fog = {
   active: boolean;
   range: number;
   enable(world: FogWorld, cameras: FogCameras, planViewActive: boolean): void;
-  disable(world: FogWorld, cameras: FogCameras, occupiedLinesVisibleAfter: boolean): void;
+  disable(world: FogWorld, occupiedLinesVisibleAfter: boolean): void;
   rebuild(world: FogWorld, planViewActive: boolean): void;
   setPlanViewBoost(active: boolean): void;
   status(cube: Cube | null | undefined, player: FogPlayer): FogStatus;
@@ -59,22 +59,23 @@ export function createFog(): Fog {
 
   function enable(world: FogWorld, cameras: FogCameras, planViewActive: boolean): void {
     state.active = true;
+    // Hide every cosmetic layer that overflows the player's local zone — halo
+    // and galactic core would otherwise stay fully lit while the player area
+    // is masked by the visibility field.
     world.galaxyScene.setHaloVisible(false);
+    world.galaxyScene.setCoreVisible(false);
     world.occupiedLines.visible = false;
-    cameras.perspectiveControls.enablePan = false;
-    cameras.orthoControls.enablePan = false;
 
     rebuild(world, planViewActive);
     tweenCameraToPlayer(world, cameras);
   }
 
-  function disable(world: FogWorld, cameras: FogCameras, occupiedLinesVisibleAfter: boolean): void {
+  function disable(world: FogWorld, occupiedLinesVisibleAfter: boolean): void {
     state.active = false;
     world.galaxyScene.setVisibilityField(null);
     world.galaxyScene.setHaloVisible(true);
+    world.galaxyScene.setCoreVisible(true);
     world.occupiedLines.visible = occupiedLinesVisibleAfter;
-    cameras.perspectiveControls.enablePan = true;
-    cameras.orthoControls.enablePan = true;
     disposeGrid(world.galaxyScene);
   }
 

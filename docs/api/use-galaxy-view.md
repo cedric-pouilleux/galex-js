@@ -56,6 +56,7 @@ type ClippingState =
 | `dimming` | `Ref<number>` | `scene.setDimming(v)` — multiplicateur global (0..1) sur toutes les couches |
 | `gasDim` | `Ref<number>` | `scene.setGasDim(v)` — gas-only (armGlow, gasStreaks, nebulae, innerRing, centerDust) |
 | `haloVisible` | `Ref<boolean>` | `scene.setHaloVisible(v)` — toggle du halo doux |
+| `coreVisible` | `Ref<boolean>` | `scene.setCoreVisible(v)` — toggle du noyau galactique (anneau interne + bulbe) |
 | `orthoSize` | `Ref<number>` | `scene.setOrthoSize(v)` — sprite size en mode ortho ; `0` = perspective |
 | `visibilityField` | `Ref<VisibilityFieldConfig \| null>` | `scene.setVisibilityField(v)` — fog of war multi-focal |
 | `clipping` | `Ref<ClippingState>` | `scene.setClipping(...)` — plan de clipping monde |

@@ -44,6 +44,10 @@
       <input type="checkbox" id="togglePlanView" />
       <span>Vue plateau 2D</span>
     </label>
+    <label class="toggle">
+      <input type="checkbox" id="toggleMeasure" />
+      <span>Mesurer une distance</span>
+    </label>
     <div id="fogRangeRow" class="range-row">
       <span class="range-label">Rayon</span>
       <input type="range" id="fogRange" min="1" max="30" value="2" step="1" />
@@ -108,9 +112,11 @@
   <div id="legend">
     <kbd>survol</kbd> inspecter
     <kbd>clic</kbd> zoomer sur un cube
-    <kbd>esc</kbd> revenir
-    <kbd>clic + glisser</kbd> orbite
+    <kbd>glisser sur un cube</kbd> sélectionner plusieurs cubes (peinture)
+    <kbd>glisser dans le vide</kbd> orbite
     <kbd>molette</kbd> zoom
+    <kbd>esc</kbd> revenir
+    <kbd>mesure</kbd> 2 cubes (orbite) ou 2 étoiles (gros plan) → distance
   </div>
 
   <div id="starTooltip"></div>

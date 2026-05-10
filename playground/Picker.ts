@@ -15,12 +15,15 @@ export type Picker = {
   readonly pointerClientX: number;
   readonly pointerClientY: number;
   bindPointerEvents(handlers?: PickerHandlers): void;
+  /** Picks the cube hit by a ray cast from the cached pointer. */
   pickCube(camera: THREE.Camera, root: THREE.Object3D, grid: CubeGrid): Cube | null;
+  /** Picks the cube hit at an arbitrary canvas-local pixel — independent of `pointer`. */
+  pickCubeAt(canvasX: number, canvasY: number, camera: THREE.Camera, root: THREE.Object3D, grid: CubeGrid): Cube | null;
 };
 
 /**
- * Thin wrapper around the canvas pointer state + a raycaster reused frame-to-frame.
- * Owns no scene knowledge — the caller passes the camera and the local grid each pick.
+ * Thin wrapper around the canvas pointer state + a reused raycaster. Owns no
+ * scene knowledge — the caller passes the camera and the local grid each pick.
  */
 export function createPicker(canvas: HTMLElement): Picker {
   const pointer = new THREE.Vector2();
@@ -31,9 +34,11 @@ export function createPicker(canvas: HTMLElement): Picker {
   const raycaster = new THREE.Raycaster();
   raycaster.params.Points!.threshold = 0.18;
 
+  // Scratch values — allocated once, reused per pick to avoid GC pressure.
   const invMat = new THREE.Matrix4();
   const rayOrigin = new THREE.Vector3();
   const rayDir = new THREE.Vector3();
+  const scratchPointer = new THREE.Vector2();
 
   let downX = 0;
   let downY = 0;
@@ -48,12 +53,34 @@ export function createPicker(canvas: HTMLElement): Picker {
   }
 
   /**
-   * Wires pointer events on the canvas. The caller receives a callback when the
-   * user produces a click (tap), with the pointer state already updated to the
-   * up-event coordinates so a follow-up `pickCube` call will be coherent.
-   *
-   * Event handlers as parameters are unavoidable here — they bridge raw DOM
-   * events to app logic, which is the canonical "force majeur" exception.
+   * Casts a ray from `ndc` (normalised device coords) through `camera` into
+   * `root`'s local space, then walks the cube grid via Amanatides & Woo.
+   * Shared internals for {@link pickCube} and {@link pickCubeAt}.
+   */
+  function castRay(ndc: THREE.Vector2, camera: THREE.Camera, root: THREE.Object3D, grid: CubeGrid): Cube | null {
+    raycaster.setFromCamera(ndc, camera);
+    root.updateMatrixWorld();
+    invMat.copy(root.matrixWorld).invert();
+    rayOrigin.copy(raycaster.ray.origin).applyMatrix4(invMat);
+    rayDir.copy(raycaster.ray.direction).transformDirection(invMat);
+    return grid.pickCube(rayOrigin, rayDir);
+  }
+
+  function pickCube(camera: THREE.Camera, root: THREE.Object3D, grid: CubeGrid): Cube | null {
+    return castRay(pointer, camera, root, grid);
+  }
+
+  function pickCubeAt(canvasX: number, canvasY: number, camera: THREE.Camera, root: THREE.Object3D, grid: CubeGrid): Cube | null {
+    const rect = canvas.getBoundingClientRect();
+    scratchPointer.x = (canvasX / rect.width) * 2 - 1;
+    scratchPointer.y = -(canvasY / rect.height) * 2 + 1;
+    return castRay(scratchPointer, camera, root, grid);
+  }
+
+  /**
+   * Wires pointer events on the canvas. The caller receives `onClick` for a
+   * tap (no drag, no long-hold), with the pointer state already updated to the
+   * up-event coordinates so a follow-up `pickCube` call is coherent.
    */
   function bindPointerEvents(handlers: PickerHandlers = {}): void {
     canvas.addEventListener('pointermove', (e) => {
@@ -80,19 +107,6 @@ export function createPicker(canvas: HTMLElement): Picker {
     });
   }
 
-  /**
-   * Casts a ray from the current pointer through the active camera into a
-   * THREE.Object3D's local space, then walks the cube grid via Amanatides & Woo.
-   */
-  function pickCube(camera: THREE.Camera, root: THREE.Object3D, grid: CubeGrid): Cube | null {
-    raycaster.setFromCamera(pointer, camera);
-    root.updateMatrixWorld();
-    invMat.copy(root.matrixWorld).invert();
-    rayOrigin.copy(raycaster.ray.origin).applyMatrix4(invMat);
-    rayDir.copy(raycaster.ray.direction).transformDirection(invMat);
-    return grid.pickCube(rayOrigin, rayDir);
-  }
-
   return {
     pointer,
     get pointerActive() { return pointerActive; },
@@ -100,5 +114,6 @@ export function createPicker(canvas: HTMLElement): Picker {
     get pointerClientY() { return pointerClientY; },
     bindPointerEvents,
     pickCube,
+    pickCubeAt,
   };
 }

@@ -34,6 +34,15 @@ export function createCameras(canvas: HTMLElement): PlaygroundCameras {
   perspectiveControls.minDistance = 4;
   perspectiveControls.maxDistance = 280;
   perspectiveControls.target.set(0, 0, 0);
+  // Galaxy stays centred — panning is permanently off. Both mouse buttons
+  // rotate; the host's PaintSelection composable opts out by toggling
+  // `controls.enabled` when a drag starts on a populated cube.
+  perspectiveControls.enablePan = false;
+  perspectiveControls.mouseButtons = {
+    LEFT: THREE.MOUSE.ROTATE,
+    MIDDLE: THREE.MOUSE.DOLLY,
+    RIGHT: THREE.MOUSE.ROTATE,
+  };
 
   const orthoCamera = new THREE.OrthographicCamera(
     -ORTHO_HALF_HEIGHT * aspect, ORTHO_HALF_HEIGHT * aspect,
@@ -48,12 +57,19 @@ export function createCameras(canvas: HTMLElement): PlaygroundCameras {
   orthoControls.enableDamping = true;
   orthoControls.dampingFactor = 0.08;
   orthoControls.enableRotate = false;
-  orthoControls.screenSpacePanning = true;
+  orthoControls.enablePan = false;
   orthoControls.minZoom = 0.4;
   orthoControls.maxZoom = 8;
   orthoControls.zoomSpeed = 1.2;
   orthoControls.target.set(0, 0, 0);
   orthoControls.enabled = false;
+  // Plan view: only zoom is allowed. Listing LEFT/RIGHT as null is redundant
+  // since enableRotate/enablePan are both off, but makes the intent explicit.
+  orthoControls.mouseButtons = {
+    LEFT: null,
+    MIDDLE: THREE.MOUSE.DOLLY,
+    RIGHT: null,
+  };
 
   function resize(width: number, height: number): void {
     const a = width / height;

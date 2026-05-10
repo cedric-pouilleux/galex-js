@@ -10,6 +10,7 @@ import type { Hud } from './HUD.js';
 import type { Fog } from './Fog.js';
 import type { Closeup } from './Closeup.js';
 import type { Player } from './Player.js';
+import type { MeasureTool } from './MeasureTool.js';
 
 export type OrbitHoverContext = {
   picker: Picker;
@@ -62,36 +63,41 @@ export type CloseupHoverContext = {
   hud: Hud;
   closeup: Closeup;
   starTooltip: HTMLElement;
+  measureTool: MeasureTool;
+  galaxyData: GalaxyData;
 };
 
 /**
- * Updates the star-name tooltip + hover ring during a close-up. Drives the
- * tooltip position from the raw client coordinates so it tracks the pointer
- * even when the canvas is offset on the page.
+ * Updates the star-name tooltip + hover ring during a close-up, and feeds the
+ * hovered star (translated to a global index) into the measure tool. The tool
+ * call is a no-op unless the tool is enabled in 'star' mode, in which case
+ * the live A↔hover distance segment is refreshed.
  */
 export function updateCloseupHover(ctx: CloseupHoverContext): void {
-  const { picker, hud, closeup, starTooltip } = ctx;
-  if (!picker.pointerActive) {
-    starTooltip.style.display = 'none';
-    closeup.hideHoverRing();
-    hud.setStarName(null);
-    return;
-  }
-  const star = closeup.starAtPointer(picker.pointer);
-  if (!star) {
-    starTooltip.style.display = 'none';
-    closeup.hideHoverRing();
-    hud.setStarName(null);
-    return;
-  }
+  if (!ctx.picker.pointerActive) { clearCloseupHover(ctx); return; }
+
+  const star = ctx.closeup.starAtPointer(ctx.picker.pointer);
+  if (!star) { clearCloseupHover(ctx); return; }
+
+  const { picker, hud, closeup, starTooltip, measureTool, galaxyData } = ctx;
   const tempStr = star.temp
     ? `<div class="star-tooltip-temp">${spectralClass(star.temp)} · ${Math.round(star.temp).toLocaleString('fr-FR')} K</div>`
     : '';
-  starTooltip.innerHTML =
-    `<div class="star-tooltip-name">${star.name}</div>${tempStr}`;
+  starTooltip.innerHTML = `<div class="star-tooltip-name">${star.name}</div>${tempStr}`;
   starTooltip.style.left = `${picker.pointerClientX}px`;
   starTooltip.style.top  = `${picker.pointerClientY}px`;
   starTooltip.style.display = 'block';
   closeup.showHoverRing(star.index);
   hud.setStarName(star.name);
+
+  // `globalIndex` is the close-up field's local→global mapping, safe even
+  // when several cubes are merged in a marquee selection.
+  measureTool.setHoveredStar(galaxyData, star.globalIndex);
+}
+
+function clearCloseupHover(ctx: CloseupHoverContext): void {
+  ctx.starTooltip.style.display = 'none';
+  ctx.closeup.hideHoverRing();
+  ctx.hud.setStarName(null);
+  ctx.measureTool.setHoveredStar(ctx.galaxyData, null);
 }

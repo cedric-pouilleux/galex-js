@@ -51,16 +51,11 @@ export function createPlanView(): PlanView {
       // Stop the slow rotation idle so the disk is presented flat.
       world.galaxyScene.object3D.rotation.y = 0;
 
-      // Frame the ortho camera on the player when the fog is on, otherwise on
-      // the world centre.
-      const center = fog.active
-        ? world.galaxyData.grid.cubeToWorldCenter(world.player.cube.i, world.player.cube.j, world.player.cube.k)
-        : { x: 0, y: 0, z: 0 };
-      cameras.orthoControls.target.set(center.x, 0, center.z);
-      cameras.orthoCamera.position.set(center.x, cameras.orthoCamY, center.z);
+      // Galaxy is locked at origin — always frame the ortho camera on (0, 0, 0).
+      cameras.orthoControls.target.set(0, 0, 0);
+      cameras.orthoCamera.position.set(0, cameras.orthoCamY, 0);
       cameras.orthoCamera.zoom = 1;
       cameras.orthoCamera.updateProjectionMatrix();
-      cameras.orthoControls.enablePan = !fog.active;
 
       cameras.perspectiveControls.enabled = false;
       cameras.orthoControls.enabled = true;

@@ -20,6 +20,8 @@ export type GalaxyScene = {
   setGasDim(factor: number): void;
   /** Toggles the soft halo behind the disk. */
   setHaloVisible(visible: boolean): void;
+  /** Toggles the galactic core (inner ring + center dust). Typically hidden under fog of war. */
+  setCoreVisible(visible: boolean): void;
   setOrthoSize(zoom: number): void;
   setClipping(active: boolean, normal?: THREE.Vector3, point?: THREE.Vector3): void;
   setVisibilityField(config: VisibilityFieldConfig | null): void;
@@ -199,6 +201,11 @@ export function createGalaxyScene(galaxyData: GalaxyData, viewOpts: GalaxySceneO
     a.halo.visible = visible;
   }
 
+  function setCoreVisible(visible: boolean): void {
+    a.innerRing.visible = visible;
+    if (a.centerDust) a.centerDust.group.visible = visible;
+  }
+
   /** Drives point-sprite size for the orthographic camera. `zoom <= 0` falls back to perspective. */
   function setOrthoSize(zoom: number): void {
     if (zoom <= 0) {
@@ -266,6 +273,7 @@ export function createGalaxyScene(galaxyData: GalaxyData, viewOpts: GalaxySceneO
     setDimming,
     setGasDim,
     setHaloVisible,
+    setCoreVisible,
     setOrthoSize,
     setClipping,
     setVisibilityField,

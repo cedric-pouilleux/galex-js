@@ -90,6 +90,28 @@ test('mutating haloVisible toggles the halo mesh visibility', async () => {
   scope.stop();
 });
 
+test('mutating coreVisible toggles the inner ring and center dust group together', async () => {
+  const scope = effectScope();
+  await scope.run(async () => {
+    const view = useGalaxyView(createGalaxyData({ ...baseOpts, fillCenter: true }));
+    const innerRing = view.object3D.children.find((c) => c.name === 'innerRing')!;
+    const centerDust = view.object3D.children.find((c) => c.name === 'centerDust')!;
+    assert.equal(innerRing.visible, true);
+    assert.equal(centerDust.visible, true);
+
+    view.coreVisible.value = false;
+    await nextTick();
+    assert.equal(innerRing.visible, false);
+    assert.equal(centerDust.visible, false);
+
+    view.coreVisible.value = true;
+    await nextTick();
+    assert.equal(innerRing.visible, true);
+    assert.equal(centerDust.visible, true);
+  });
+  scope.stop();
+});
+
 test('mutating visibilityField updates the per-particle visibility attribute', async () => {
   const scope = effectScope();
   await scope.run(async () => {

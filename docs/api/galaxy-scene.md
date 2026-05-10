@@ -58,6 +58,7 @@ type GalaxyScene = {
   setDimming(factor: number): void;
   setGasDim(factor: number): void;
   setHaloVisible(visible: boolean): void;
+  setCoreVisible(visible: boolean): void;
   setOrthoSize(zoom: number): void;
   setClipping(active: boolean, normal?: THREE.Vector3, point?: THREE.Vector3): void;
   setVisibilityField(config: VisibilityFieldConfig | null): void;
@@ -94,6 +95,10 @@ Comme `setDimming`, mais **uniquement** sur les couches gaz : armGlow, gasStreak
 ### `setHaloVisible(boolean)`
 
 Toggle le halo doux (cercle XZ derrière le disque). Le cacher est typique quand on active un fog of war centré sur le joueur — sinon le halo extérieur reste visible alors que le reste s'éteint.
+
+### `setCoreVisible(boolean)`
+
+Toggle le noyau galactique (anneau interne + bulbe central). Même usage que `setHaloVisible` sous fog of war : ces couches couvrent plus que la zone locale du joueur, donc on les masque tant qu'il est confiné à un sous-ensemble de cubes.
 
 ### `setOrthoSize(zoom)`
 

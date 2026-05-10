@@ -5,6 +5,7 @@ import type { Fog } from './Fog.js';
 import type { PlanView } from './PlanView.js';
 import type { Hud } from './HUD.js';
 import type { Picker } from './Picker.js';
+import type { MeasureTool } from './MeasureTool.js';
 import { updateOrbitHover, updateCloseupHover } from './Hover.js';
 
 const IDLE_ROTATION_PER_FRAME = 0.0004;
@@ -24,6 +25,7 @@ export type RenderLoopDeps = {
   orthoCamera: THREE.OrthographicCamera;
   orthoControls: { update(): void; target: THREE.Vector3; enabled: boolean };
   orthoCamY: number;
+  measureTool: MeasureTool;
   /** Live ref to the current galaxy world — refreshed by the regen pipeline. */
   getCurrentWorld: () => GalaxyWorld;
 };
@@ -36,7 +38,7 @@ export function startRenderLoop(deps: RenderLoopDeps): void {
   const {
     renderer, labelRenderer, scene, hud, fog, planView, picker, canvas, starTooltip,
     perspectiveCamera, perspectiveControls, orthoCamera, orthoControls, orthoCamY,
-    getCurrentWorld,
+    measureTool, getCurrentWorld,
   } = deps;
 
   const playerWorldCenter = new THREE.Vector3();
@@ -71,7 +73,7 @@ export function startRenderLoop(deps: RenderLoopDeps): void {
     }
 
     if (closeup.isActive()) {
-      updateCloseupHover({ picker, hud, closeup, starTooltip });
+      updateCloseupHover({ picker, hud, closeup, starTooltip, measureTool, galaxyData });
     } else {
       updateOrbitHover({
         picker, hud, fog, canvas,

@@ -20,8 +20,17 @@ Tout identifiant exporté qui contiendrait *player*, *enemy*, *team*, *fog of wa
 | `createVisibilityFieldLines` | Wireframe à 2 niveaux de transparence sur les cubes couverts | [→](./visibility-field#createvisibilityfieldlines) |
 | `computeVisibilityField` | Helper pur (testable hors Three) qui calcule un buffer d'opacités | [→](./visibility-field#computevisibilityfield) |
 | `tierMapForVisibilityField` | Helper pur qui projette les focals sur la grille | [→](./visibility-field#tiermap) |
-| `prepareCloseupField` | Sous-buffer + shader haute fidélité pour la vue rapprochée d'un cube | [→](./closeup) |
+| `prepareCloseupField` | Sous-buffer + shader haute fidélité pour la vue rapprochée d'un ou plusieurs cubes | [→](./closeup) |
 | `createHoverRing` | Anneau billboard pour survol d'étoile dans une vue rapprochée | [→](./closeup) |
+
+## Compositions du sandbox
+
+Ces deux modules vivent dans `playground/` (pas dans la lib), mais sont documentés ici comme **références d'orchestration** : voici comment composer les primitives lib pour produire un geste de jeu.
+
+| Composition | Rôle | Page |
+|---|---|---|
+| `createPaintSelection` | Sélection multi-cubes en peinture (drag-démarré-sur-cube → highlight des cubes survolés) | [→](./paint-selection) |
+| `createMeasureTool` | Mesure de distance à deux ancres — cubes en orbite, étoiles en close-up | [→](./measure-tool) |
 
 ## Exemple — incarner un joueur
 

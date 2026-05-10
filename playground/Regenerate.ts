@@ -62,7 +62,7 @@ export function createRegenerate(deps: RegenerateDeps): (arg?: { newSeed?: boole
     // Exit dynamic modes before tearing down — restored after rebuild.
     if (wasPlanView) planView.set(false, currentWorld, camerasBag, fog, hud);
     if (wasFog) {
-      fog.disable(currentWorld, camerasBag, toggleGridEl.checked);
+      fog.disable(currentWorld, toggleGridEl.checked);
       fogRangeRowEl.classList.remove('active');
     }
 

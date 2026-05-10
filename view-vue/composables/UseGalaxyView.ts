@@ -18,6 +18,8 @@ export type GalaxyViewControls = {
   gasDim: Ref<number>;
   /** Toggles the soft halo behind the disk. */
   haloVisible: Ref<boolean>;
+  /** Toggles the galactic core (inner ring + center dust). Typically off under fog of war. */
+  coreVisible: Ref<boolean>;
   /** Sprite size driver for the orthographic camera. `0` falls back to perspective. */
   orthoSize: Ref<number>;
   /** Multi-focal visibility field; `null` clears it (everything visible). */
@@ -71,6 +73,7 @@ export function useGalaxyView(
   const dimming = ref(1.0);
   const gasDim = ref(1.0);
   const haloVisible = ref(true);
+  const coreVisible = ref(true);
   const orthoSize = ref(0);
   const visibilityField = ref<VisibilityFieldConfig | null>(null);
   const clipping = ref<ClippingState>({ active: false });
@@ -81,6 +84,7 @@ export function useGalaxyView(
   watch(dimming, (v) => scene.setDimming(v), { immediate: false });
   watch(gasDim, (v) => scene.setGasDim(v), { immediate: false });
   watch(haloVisible, (v) => scene.setHaloVisible(v), { immediate: false });
+  watch(coreVisible, (v) => scene.setCoreVisible(v), { immediate: false });
   watch(orthoSize, (v) => scene.setOrthoSize(v), { immediate: false });
   watch(visibilityField, (v) => scene.setVisibilityField(v), { immediate: false });
   watch(clipping, (v) => {
@@ -97,6 +101,7 @@ export function useGalaxyView(
     dimming,
     gasDim,
     haloVisible,
+    coreVisible,
     orthoSize,
     visibilityField,
     clipping,

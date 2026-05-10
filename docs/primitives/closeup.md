@@ -6,7 +6,7 @@ La lib expose **trois primitives neutres** pour bâtir une vue rapprochée d'un 
 
 | Symbole | Rôle |
 |---|---|
-| `prepareCloseupField(cube, galaxyData, highlight?)` | Construit un sous-buffer (positions/colors/sizes/temps + noms Bayer + `aSeed` dérivé du seed galaxie) et le matérialise en `THREE.Points` avec le shader haute fidélité. Retourne `null` si le cube est vide. |
+| `prepareCloseupField(cubes, galaxyData, highlight?)` | Construit un sous-buffer (positions/colors/sizes/temps + noms Bayer + `aSeed` dérivé du seed galaxie + `globalIndices`) et le matérialise en `THREE.Points` avec le shader haute fidélité. Accepte un cube unique ou un tableau (sélection multiple — voir [PaintSelection](./paint-selection)). Retourne `null` si la sélection est vide. |
 | `createHoverRing()` | Anneau billboard auto-redimensionné sur l'étoile survolée. Teinté par température (`blackbodyRGB`). |
 | `STAR_VERT` / `STAR_FRAG` | Shader GLSL haute fidélité (giant boost, spikes, halo, body tightness, core fleck, variabilité Cepheid). 6 traits décorrélés par étoile depuis `aSeed`. |
 
@@ -61,7 +61,13 @@ type CloseupHighlight = {
 };
 ```
 
-Si `highlight.index` n'est pas dans `cube.starIndices`, aucune étoile n'est mise en évidence (comportement silencieux).
+Si `highlight.index` n'est pas dans la sélection (l'union de `starIndices` de chaque cube), aucune étoile n'est mise en évidence (comportement silencieux).
+
+## Sélection multi-cubes
+
+Quand la sélection contient plusieurs cubes, leurs étoiles sont concaténées dans un seul `THREE.Points`. Le tableau `globalIndices` (typage `Int32Array`) trace, pour chaque sommet local, l'index global dans `galaxyData.data` — c'est la traduction local→global à utiliser après un raycast (mesures de distance, highlight, etc.). Le caller décide du cadrage caméra (bounding-box des centres de cubes) — la lib ne fait que produire les buffers.
+
+Le playground compose ça avec [PaintSelection](./paint-selection) (drag-démarré-sur-cube → peinture) ; le close-up multi-cubes s'ouvre au relâcher.
 
 ## Composer le concept "joueur"
 
