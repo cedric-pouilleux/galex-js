@@ -4,8 +4,8 @@ import { templateCompilerOptions } from '@tresjs/core';
 import { resolve } from 'node:path';
 
 export default defineConfig({
-  // GitHub Pages serves the project under `/galex/`; locally Vite stays at `/`.
-  base: process.env.GITHUB_PAGES ? '/galex/' : '/',
+  // GitHub Pages serves the project under `/galex-js/`; locally Vite stays at `/`.
+  base: process.env.GITHUB_PAGES ? '/galex-js/' : '/',
   plugins: [
     // TresJS ships its own Vue compiler config: `<TresCanvas>` is a real Vue
     // component, while `<TresPoints>` etc. are TresJS-managed custom elements.

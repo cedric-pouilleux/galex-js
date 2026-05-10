@@ -57,7 +57,8 @@
       "Bash(node ./screenshot.mjs)",
       "Bash(git -C \"d:/dev/stellex-galaxy-sandbox\" remote -v)",
       "Bash(npm ci *)",
-      "Bash(GITHUB_PAGES=true npm run build)"
+      "Bash(GITHUB_PAGES=true npm run build)",
+      "Bash(git -C \"d:/dev/stellex-galaxy-sandbox\" remote get-url origin)"
     ]
   }
 }
