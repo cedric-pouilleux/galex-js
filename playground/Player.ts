@@ -31,9 +31,17 @@ export function pickPlayerStar(galaxyData: GalaxyData): Player {
     candidates.push(c);
   }
   candidates.sort((a, b) => (a.i - b.i) || (a.k - b.k));
-  const cube: Cube = candidates.length > 0
+  const cube = candidates.length > 0
     ? candidates[Math.floor(rng() * candidates.length)]
-    : galaxyData.grid.cubes.values().next().value!;
+    : firstNonEmptyCube(galaxyData);
   const starIdx = cube.starIndices[Math.floor(rng() * cube.starIndices.length)];
   return { star: starIdx, cube, name: PLAYER_NAME };
+}
+
+/** Last-resort fallback when the disk has no cube in the mid-radius shell. */
+function firstNonEmptyCube(galaxyData: GalaxyData): Cube {
+  for (const c of galaxyData.grid.cubes.values()) {
+    if (c.starIndices.length > 0) return c;
+  }
+  throw new Error('pickPlayerStar: galaxy has no populated cube');
 }

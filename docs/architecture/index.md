@@ -68,9 +68,9 @@ export function createCubeGrid(opts: CubeGridOptions = {}): CubeGrid {
 }
 ```
 
-### Trois niveaux d'API par couche visuelle
+### Deux niveaux d'API par couche visuelle
 
-Chaque couche de `view/effects/` expose trois niveaux pour pouvoir être consommée par Three impératif **ou** TresJS :
+Chaque couche de `view/effects/` expose deux niveaux pour pouvoir être consommée par Three impératif **ou** TresJS :
 
 ```ts
 // 1. Pure data — runtime-agnostic, consommable depuis n'importe où
@@ -78,13 +78,18 @@ const buffers = buildNebulaeBuffers(opts);
 
 // 2. Material def — constructor params (uniforms + shaders), pas d'instance Three
 const materialDef = createNebulaeMaterialDef();
-
-// 3. Mount Three impératif — convenience pour le client classique
-const points = createNebulae(opts);
 ```
 
-Le client Three classique consomme **3** : `scene.add(createNebulae(opts))`.
-Le client Vue/TresJS consomme **1+2** dans son template :
+Le mount Three impératif (`THREE.Points`, `THREE.Mesh`) est centralisé dans `createGalaxyScene` — il consomme déjà 1 + 2 via le composer. Un client qui voudrait monter manuellement une sous-couche reste libre de combiner les deux niveaux ci-dessus :
+
+```ts
+const geo = new THREE.BufferGeometry();
+geo.setAttribute('position', new THREE.BufferAttribute(buffers.positions, 3));
+// … autres attributes …
+const points = new THREE.Points(geo, new THREE.ShaderMaterial(materialDef));
+```
+
+Le client Vue/TresJS consomme **1 + 2** dans son template :
 ```vue
 <TresPoints>
   <TresBufferGeometry :position="[buffers.positions, 3]" :a-color="[buffers.colors, 3]" />

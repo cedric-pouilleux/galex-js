@@ -3,6 +3,7 @@ import { computeVisibilityField } from '../core/Visibility.js';
 import { composeGalaxyLayers } from './GalaxyLayersComposer.js';
 import type {
   ComposeLayersOptions, ComposedGalaxyLayers, PointsLayer, StarLayer,
+  VisibilityAwareLayerName,
 } from './GalaxyLayersComposer.js';
 import { disposeObject3DTree } from './Dispose.js';
 import type { GalaxyData } from '../core/GalaxyData.js';
@@ -30,6 +31,28 @@ export type GalaxyScene = {
 
 type OrthoLayer = { material: THREE.ShaderMaterial; factor: number };
 
+/** Geometry + material pair for any single-mesh/points layer. */
+type LayerHandle<TObject extends THREE.Object3D> = {
+  object: TObject;
+  material: THREE.ShaderMaterial;
+};
+
+type CenterDustHandle = {
+  group: THREE.Group;
+  disc: LayerHandle<THREE.Mesh>;
+  dust: LayerHandle<THREE.Points>;
+};
+
+type AssembledLayers = {
+  field: LayerHandle<THREE.Points>;
+  halo: LayerHandle<THREE.Mesh>;
+  armGlow: LayerHandle<THREE.Points>;
+  gasStreaks: LayerHandle<THREE.Points>;
+  nebulae: LayerHandle<THREE.Points>;
+  innerRing: LayerHandle<THREE.Points>;
+  centerDust: CenterDustHandle | null;
+};
+
 function setUniform(mat: THREE.ShaderMaterial, name: string, value: number): void {
   if (mat.uniforms[name]) mat.uniforms[name].value = value;
 }
@@ -53,85 +76,77 @@ function attachStretchedAttributes(
 function makeStretchedPointsLayer<TBuffers extends {
   positions: Float32Array; colors: Float32Array; sizes: Float32Array;
   tangents: Float32Array; stretches: Float32Array; visibility: Float32Array;
-}>(layer: PointsLayer<TBuffers>, name: string): THREE.Points {
+}>(layer: PointsLayer<TBuffers>, name: string): LayerHandle<THREE.Points> {
   const geo = new THREE.BufferGeometry();
   attachStretchedAttributes(geo, layer.buffers);
-  const points = new THREE.Points(geo, new THREE.ShaderMaterial(layer.materialDef));
-  points.frustumCulled = false;
-  points.name = name;
-  return points;
+  const material = new THREE.ShaderMaterial(layer.materialDef);
+  const object = new THREE.Points(geo, material);
+  object.frustumCulled = false;
+  object.name = name;
+  return { object, material };
 }
 
-function makeStarFieldPoints(layer: StarLayer): THREE.Points {
+function makeStarFieldPoints(layer: StarLayer): LayerHandle<THREE.Points> {
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position',    new THREE.BufferAttribute(layer.positions,  3));
   geo.setAttribute('aColor',      new THREE.BufferAttribute(layer.colors,     3));
   geo.setAttribute('aSize',       new THREE.BufferAttribute(layer.sizes,      1));
   geo.setAttribute('aVisibility', new THREE.BufferAttribute(layer.visibility, 1));
-  const points = new THREE.Points(geo, new THREE.ShaderMaterial(layer.materialDef));
-  points.frustumCulled = false;
-  points.name = 'starField';
-  return points;
+  const material = new THREE.ShaderMaterial(layer.materialDef);
+  const object = new THREE.Points(geo, material);
+  object.frustumCulled = false;
+  object.name = 'field';
+  return { object, material };
 }
 
 function makeNebulaePoints(layer: PointsLayer<{
   positions: Float32Array; colors: Float32Array; sizes: Float32Array; visibility: Float32Array;
-}>): THREE.Points {
+}>): LayerHandle<THREE.Points> {
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position',    new THREE.BufferAttribute(layer.buffers.positions,  3));
   geo.setAttribute('aColor',      new THREE.BufferAttribute(layer.buffers.colors,     3));
   geo.setAttribute('aSize',       new THREE.BufferAttribute(layer.buffers.sizes,      1));
   geo.setAttribute('aVisibility', new THREE.BufferAttribute(layer.buffers.visibility, 1));
-  const points = new THREE.Points(geo, new THREE.ShaderMaterial(layer.materialDef));
-  points.frustumCulled = false;
-  points.name = 'nebulae';
-  return points;
+  const material = new THREE.ShaderMaterial(layer.materialDef);
+  const object = new THREE.Points(geo, material);
+  object.frustumCulled = false;
+  object.name = 'nebulae';
+  return { object, material };
 }
 
-function makeHaloMesh(geometry: THREE.CircleGeometry, materialDef: ShaderMaterialDef): THREE.Mesh {
-  const mesh = new THREE.Mesh(geometry, new THREE.ShaderMaterial(materialDef));
-  mesh.rotation.x = -Math.PI / 2;
-  mesh.name = 'halo';
-  return mesh;
+function makeFlatDiscMesh(
+  geometry: THREE.CircleGeometry,
+  materialDef: ShaderMaterialDef,
+  name: string,
+): LayerHandle<THREE.Mesh> {
+  const material = new THREE.ShaderMaterial(materialDef);
+  const object = new THREE.Mesh(geometry, material);
+  object.rotation.x = -Math.PI / 2;
+  object.name = name;
+  return { object, material };
 }
-
-function makeCenterDiscMesh(geometry: THREE.CircleGeometry, materialDef: ShaderMaterialDef): THREE.Mesh {
-  const mesh = new THREE.Mesh(geometry, new THREE.ShaderMaterial(materialDef));
-  mesh.rotation.x = -Math.PI / 2;
-  return mesh;
-}
-
-type AssembledLayers = {
-  field: THREE.Points;
-  halo: THREE.Mesh;
-  armGlow: THREE.Points;
-  gasStreaks: THREE.Points;
-  nebulae: THREE.Points;
-  innerRing: THREE.Points;
-  centerDust: { group: THREE.Group; discMaterial: THREE.ShaderMaterial; dustMaterial: THREE.ShaderMaterial } | null;
-};
 
 function assemble(layers: ComposedGalaxyLayers): AssembledLayers {
   const field      = makeStarFieldPoints(layers.field);
-  const halo       = makeHaloMesh(layers.halo.geometry, layers.halo.materialDef);
+  const halo       = makeFlatDiscMesh(layers.halo.geometry, layers.halo.materialDef, 'halo');
   const armGlow    = makeStretchedPointsLayer(layers.armGlow,    'armGlow');
   const gasStreaks = makeStretchedPointsLayer(layers.gasStreaks, 'gasStreaks');
   const nebulae    = makeNebulaePoints(layers.nebulae);
   const innerRing  = makeStretchedPointsLayer(layers.innerRing,  'innerRing');
 
-  let centerDust: AssembledLayers['centerDust'] = null;
+  let centerDust: CenterDustHandle | null = null;
   if (layers.centerDust) {
     const group = new THREE.Group();
     group.name = 'centerDust';
-    const disc = makeCenterDiscMesh(layers.centerDust.disc.geometry, layers.centerDust.disc.materialDef);
-    group.add(disc);
+    const disc = makeFlatDiscMesh(
+      layers.centerDust.disc.geometry,
+      layers.centerDust.disc.materialDef,
+      'centerDisc',
+    );
+    group.add(disc.object);
     const dust = makeStretchedPointsLayer(layers.centerDust.dust, 'centerDustParticles');
-    group.add(dust);
-    centerDust = {
-      group,
-      discMaterial: disc.material as THREE.ShaderMaterial,
-      dustMaterial: dust.material as THREE.ShaderMaterial,
-    };
+    group.add(dust.object);
+    centerDust = { group, disc, dust };
   }
 
   return { field, halo, armGlow, gasStreaks, nebulae, innerRing, centerDust };
@@ -150,44 +165,48 @@ export function createGalaxyScene(galaxyData: GalaxyData, viewOpts: GalaxySceneO
   const a = assemble(layers);
 
   const root = new THREE.Group();
-  root.add(a.field);
-  root.add(a.halo);
-  root.add(a.armGlow);
-  root.add(a.gasStreaks);
-  root.add(a.nebulae);
-  root.add(a.innerRing);
+  root.add(a.field.object);
+  root.add(a.halo.object);
+  root.add(a.armGlow.object);
+  root.add(a.gasStreaks.object);
+  root.add(a.nebulae.object);
+  root.add(a.innerRing.object);
   if (a.centerDust) root.add(a.centerDust.group);
 
-  // Cast each material once — the per-setter fan-out below stays cast-free.
-  const fieldMat      = a.field.material      as THREE.ShaderMaterial;
-  const haloMat       = a.halo.material       as THREE.ShaderMaterial;
-  const armGlowMat    = a.armGlow.material    as THREE.ShaderMaterial;
-  const gasStreaksMat = a.gasStreaks.material as THREE.ShaderMaterial;
-  const nebulaeMat    = a.nebulae.material    as THREE.ShaderMaterial;
-  const innerRingMat  = a.innerRing.material  as THREE.ShaderMaterial;
-
   // Concern groups: one list per setter. setDimming = field + halo + gas.
-  const gasMaterials: THREE.ShaderMaterial[] = [armGlowMat, gasStreaksMat, nebulaeMat, innerRingMat];
-  if (a.centerDust) gasMaterials.push(a.centerDust.discMaterial, a.centerDust.dustMaterial);
-  const dimMaterials: THREE.ShaderMaterial[] = [fieldMat, haloMat, ...gasMaterials];
+  const gasMaterials: THREE.ShaderMaterial[] = [
+    a.armGlow.material, a.gasStreaks.material, a.nebulae.material, a.innerRing.material,
+  ];
+  if (a.centerDust) gasMaterials.push(a.centerDust.disc.material, a.centerDust.dust.material);
+  const dimMaterials: THREE.ShaderMaterial[] = [a.field.material, a.halo.material, ...gasMaterials];
 
   // Per-layer ortho factors mirror the perspective magic numbers so stars stay
   // smaller than gas/nebulae when switching to the orthographic camera.
   const orthoSizeable: OrthoLayer[] = [
-    { material: fieldMat,      factor: 1.9 },
-    { material: armGlowMat,    factor: 2.6 },
-    { material: gasStreaksMat, factor: 2.6 },
-    { material: nebulaeMat,    factor: 2.6 },
-    { material: innerRingMat,  factor: 2.6 },
+    { material: a.field.material,      factor: 1.9 },
+    { material: a.armGlow.material,    factor: 2.6 },
+    { material: a.gasStreaks.material, factor: 2.6 },
+    { material: a.nebulae.material,    factor: 2.6 },
+    { material: a.innerRing.material,  factor: 2.6 },
   ];
-  if (a.centerDust) orthoSizeable.push({ material: a.centerDust.dustMaterial, factor: 2.6 });
+  if (a.centerDust) orthoSizeable.push({ material: a.centerDust.dust.material, factor: 2.6 });
 
   const clipMaterials: THREE.ShaderMaterial[] = [
-    fieldMat, haloMat, armGlowMat, gasStreaksMat, nebulaeMat, innerRingMat,
+    a.field.material, a.halo.material,
+    a.armGlow.material, a.gasStreaks.material, a.nebulae.material, a.innerRing.material,
   ];
-  if (a.centerDust) clipMaterials.push(a.centerDust.discMaterial, a.centerDust.dustMaterial);
+  if (a.centerDust) clipMaterials.push(a.centerDust.disc.material, a.centerDust.dust.material);
 
-  const visibilityLayers: THREE.Points[] = [a.field, a.armGlow, a.gasStreaks, a.nebulae];
+  // Resolved by name from the composer's `visibilityAwareLayers` list — keeps
+  // the orchestrator out of the "which layer is masked" decision.
+  const visibilityHandlesByName: Record<VisibilityAwareLayerName, LayerHandle<THREE.Points>> = {
+    field: a.field,
+    armGlow: a.armGlow,
+    gasStreaks: a.gasStreaks,
+    nebulae: a.nebulae,
+  };
+  const visibilityLayers: LayerHandle<THREE.Points>[] =
+    layers.visibilityAwareLayers.map((name) => visibilityHandlesByName[name]);
 
   function setDimming(factor: number): void {
     for (const m of dimMaterials) setUniform(m, 'uDim', factor);
@@ -198,11 +217,11 @@ export function createGalaxyScene(galaxyData: GalaxyData, viewOpts: GalaxySceneO
   }
 
   function setHaloVisible(visible: boolean): void {
-    a.halo.visible = visible;
+    a.halo.object.visible = visible;
   }
 
   function setCoreVisible(visible: boolean): void {
-    a.innerRing.visible = visible;
+    a.innerRing.object.visible = visible;
     if (a.centerDust) a.centerDust.group.visible = visible;
   }
 
@@ -244,20 +263,22 @@ export function createGalaxyScene(galaxyData: GalaxyData, viewOpts: GalaxySceneO
       originX: grid.origin.x,
       originZ: grid.origin.z,
     };
-    for (const layer of visibilityLayers) {
-      const visAttr = layer.geometry.attributes.aVisibility as THREE.BufferAttribute | undefined;
-      if (!visAttr) continue;
+    for (const handle of visibilityLayers) {
+      const visAttr = handle.object.geometry.attributes.aVisibility;
+      if (!(visAttr instanceof THREE.BufferAttribute)) continue;
+      const visArray = visAttr.array as Float32Array;
       if (!config) {
-        (visAttr.array as Float32Array).fill(1);
+        visArray.fill(1);
       } else {
-        const positions = layer.geometry.attributes.position.array as Float32Array;
+        const posAttr = handle.object.geometry.attributes.position;
+        const positions = posAttr.array as Float32Array;
         computeVisibilityField(
           positions,
           projection,
           config.focals,
           config.range,
           config.fadedOpacity ?? 0.2,
-          visAttr.array as Float32Array,
+          visArray,
         );
       }
       visAttr.needsUpdate = true;

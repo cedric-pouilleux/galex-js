@@ -63,14 +63,6 @@ void main() {
 }
 `;
 
-export type StarFieldOptions = {
-  positions: Float32Array;
-  colors: Float32Array;
-  sizes: Float32Array;
-  pixelRatio?: number;
-  sizeScale?: number;
-};
-
 /** Allocates the per-star visibility attribute (defaults to 1 everywhere). */
 export function createStarFieldVisibility(starCount: number): Float32Array {
   const visibility = new Float32Array(starCount);
@@ -78,7 +70,7 @@ export function createStarFieldVisibility(starCount: number): Float32Array {
   return visibility;
 }
 
-/** Material def for the star field — reusable by both Three impératif and TresJS. */
+/** Material def for the star field — consumed by both the imperative composer and TresJS. */
 export function createStarFieldMaterialDef({
   pixelRatio,
   sizeScale = 1,
@@ -98,24 +90,4 @@ export function createStarFieldMaterialDef({
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   };
-}
-
-/**
- * Builds the star field as a `THREE.Points`. TresJS callers consume the
- * raw star buffers (already provided by `GalaxyData`) plus
- * `createStarFieldVisibility` and `createStarFieldMaterialDef` directly.
- */
-export function createStarField({
-  positions, colors, sizes, pixelRatio, sizeScale = 1,
-}: StarFieldOptions): THREE.Points {
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geo.setAttribute('aColor',   new THREE.BufferAttribute(colors,    3));
-  geo.setAttribute('aSize',    new THREE.BufferAttribute(sizes,     1));
-  geo.setAttribute('aVisibility', new THREE.BufferAttribute(createStarFieldVisibility(positions.length / 3), 1));
-
-  const mat = new THREE.ShaderMaterial(createStarFieldMaterialDef({ pixelRatio, sizeScale }));
-  const points = new THREE.Points(geo, mat);
-  points.frustumCulled = false;
-  return points;
 }

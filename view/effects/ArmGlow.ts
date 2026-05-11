@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { resolveArmCadence, writeSpiralTangent } from './ArmCadence.js';
 import type { ArmLayerOptions } from './ArmCadence.js';
 import {
@@ -94,24 +93,4 @@ export function buildArmGlowBuffers({
 /** Material def for the arm-glow layer (same stretched-sprite shader as the streaks). */
 export function createArmGlowMaterialDef(): ShaderMaterialDef {
   return createPointsMaterialDef(STRETCH_VERT, STRETCH_FRAG);
-}
-
-/**
- * Builds a `THREE.Points` for the arm-glow layer. TresJS callers consume
- * `buildArmGlowBuffers` and `createArmGlowMaterialDef` directly.
- */
-export function createArmGlow(opts: ArmGlowOptions): THREE.Points {
-  const buffers = buildArmGlowBuffers(opts);
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position',    new THREE.BufferAttribute(buffers.positions, 3));
-  geo.setAttribute('aColor',      new THREE.BufferAttribute(buffers.colors,    3));
-  geo.setAttribute('aSize',       new THREE.BufferAttribute(buffers.sizes,     1));
-  geo.setAttribute('aTangent',    new THREE.BufferAttribute(buffers.tangents,  2));
-  geo.setAttribute('aStretch',    new THREE.BufferAttribute(buffers.stretches, 1));
-  geo.setAttribute('aVisibility', new THREE.BufferAttribute(buffers.visibility, 1));
-
-  const points = new THREE.Points(geo, new THREE.ShaderMaterial(createArmGlowMaterialDef()));
-  points.frustumCulled = false;
-  points.name = 'armGlow';
-  return points;
 }

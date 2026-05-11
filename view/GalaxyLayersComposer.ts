@@ -92,6 +92,14 @@ export type CenterDustLayer = {
   dust: { buffers: CenterDustBuffers; materialDef: ShaderMaterialDef };
 };
 
+/**
+ * Names of layers whose `aVisibility` attribute must be refreshed when a
+ * visibility field (fog-of-war style) is applied. The orchestrator iterates
+ * this list rather than hard-coding it, so the composer remains the single
+ * source of truth for "which layers are masked".
+ */
+export type VisibilityAwareLayerName = 'field' | 'armGlow' | 'gasStreaks' | 'nebulae';
+
 export type ComposedGalaxyLayers = {
   field: StarLayer;
   halo: HaloLayer;
@@ -100,7 +108,12 @@ export type ComposedGalaxyLayers = {
   nebulae: PointsLayer<NebulaeBuffers>;
   innerRing: PointsLayer<InnerRingBuffers>;
   centerDust: CenterDustLayer | null;
+  visibilityAwareLayers: readonly VisibilityAwareLayerName[];
 };
+
+const VISIBILITY_AWARE_LAYERS: readonly VisibilityAwareLayerName[] = [
+  'field', 'armGlow', 'gasStreaks', 'nebulae',
+];
 
 /**
  * Builds the full set of layer buffers + material defs for a galaxy view.
@@ -187,5 +200,8 @@ export function composeGalaxyLayers(
     };
   }
 
-  return { field, halo, armGlow, gasStreaks, nebulae, innerRing, centerDust };
+  return {
+    field, halo, armGlow, gasStreaks, nebulae, innerRing, centerDust,
+    visibilityAwareLayers: VISIBILITY_AWARE_LAYERS,
+  };
 }

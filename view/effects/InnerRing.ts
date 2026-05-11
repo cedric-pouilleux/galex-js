@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { resolveArmCadence, writeSpiralTangent } from './ArmCadence.js';
 import type { ArmLayerOptions } from './ArmCadence.js';
 import { STRETCH_VERT, STRETCH_FRAG, createPointsMaterialDef } from './Shaders.js';
@@ -91,24 +90,4 @@ export function buildInnerRingBuffers({
 /** Material def for the inner-ring layer (stretched sprite shader). */
 export function createInnerRingMaterialDef(): ShaderMaterialDef {
   return createPointsMaterialDef(STRETCH_VERT, STRETCH_FRAG);
-}
-
-/**
- * Builds a `THREE.Points` for the inner-ring layer. TresJS callers consume
- * `buildInnerRingBuffers` and `createInnerRingMaterialDef` directly.
- */
-export function createInnerRing(opts: InnerRingOptions): THREE.Points {
-  const buffers = buildInnerRingBuffers(opts);
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position',    new THREE.BufferAttribute(buffers.positions, 3));
-  geo.setAttribute('aColor',      new THREE.BufferAttribute(buffers.colors,    3));
-  geo.setAttribute('aSize',       new THREE.BufferAttribute(buffers.sizes,     1));
-  geo.setAttribute('aTangent',    new THREE.BufferAttribute(buffers.tangents,  2));
-  geo.setAttribute('aStretch',    new THREE.BufferAttribute(buffers.stretches, 1));
-  geo.setAttribute('aVisibility', new THREE.BufferAttribute(buffers.visibility, 1));
-
-  const ring = new THREE.Points(geo, new THREE.ShaderMaterial(createInnerRingMaterialDef()));
-  ring.frustumCulled = false;
-  ring.name = 'innerRing';
-  return ring;
 }

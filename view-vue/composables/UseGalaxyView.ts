@@ -42,17 +42,22 @@ export type GalaxyViewHandle = GalaxyViewControls & {
  * runtime knobs as refs. Each ref change is forwarded to the underlying
  * vanilla scene via watchers — mutate the ref, the GPU updates.
  *
+ * The scene is rebuilt when the `galaxyData` input changes (e.g. seed regen):
+ * the previous scene is disposed, a fresh one is composed, every control ref
+ * is replayed onto it (so dimming/clipping/etc. survive the swap), and the
+ * outer `object3D` reference is preserved by re-parenting the new group's
+ * children — `<TresPrimitive>` consumers keep their binding.
+ *
  * Usage in TresJS:
  * ```vue
  * <script setup>
- * const galaxy = createGalaxyData({ seed: 42, count: 15000, radius: 50 });
+ * const galaxy = ref(createGalaxyData({ seed: 42 }));
  * const view = useGalaxyView(galaxy);
  * view.dimming.value = 0.6;
+ * galaxy.value = createGalaxyData({ seed: 99 }); // triggers rebuild
  * </script>
  * <template>
- *   <TresCanvas>
- *     <TresPrimitive :object="view.object3D" />
- *   </TresCanvas>
+ *   <TresCanvas><TresPrimitive :object="view.object3D" /></TresCanvas>
  * </template>
  * ```
  *
@@ -65,10 +70,13 @@ export function useGalaxyView(
   galaxyData: MaybeRefOrGetter<GalaxyData>,
   opts: MaybeRefOrGetter<GalaxySceneOptions> = {},
 ): GalaxyViewHandle {
-  // The scene is built once for the initial galaxyData snapshot. If the input
-  // ref changes downstream, callers should re-create the composable (e.g. via
-  // `<KeepAlive>` swap) — incremental updates aren't this layer's job.
-  const scene = createGalaxyScene(toValue(galaxyData), toValue(opts));
+  // Stable outer Group: <TresPrimitive :object="view.object3D" /> binds once
+  // and never has to be re-mounted across regens.
+  const object3D = new THREE.Group();
+  object3D.name = 'galaxyView';
+
+  let scene = createGalaxyScene(toValue(galaxyData), toValue(opts));
+  object3D.add(scene.object3D);
 
   const dimming = ref(1.0);
   const gasDim = ref(1.0);
@@ -77,6 +85,35 @@ export function useGalaxyView(
   const orthoSize = ref(0);
   const visibilityField = ref<VisibilityFieldConfig | null>(null);
   const clipping = ref<ClippingState>({ active: false });
+
+  /** Pushes every control ref's current value into `scene` — used after a rebuild. */
+  function replayControls(): void {
+    scene.setDimming(dimming.value);
+    scene.setGasDim(gasDim.value);
+    scene.setHaloVisible(haloVisible.value);
+    scene.setCoreVisible(coreVisible.value);
+    scene.setOrthoSize(orthoSize.value);
+    scene.setVisibilityField(visibilityField.value);
+    if (clipping.value.active) {
+      scene.setClipping(true, clipping.value.normal, clipping.value.point);
+    } else {
+      scene.setClipping(false);
+    }
+  }
+
+  // Rebuild on input changes. Watching both refs as a tuple so a simultaneous
+  // change (data + opts) triggers a single rebuild.
+  watch(
+    [() => toValue(galaxyData), () => toValue(opts)],
+    ([nextData, nextOpts]) => {
+      object3D.remove(scene.object3D);
+      scene.dispose();
+      scene = createGalaxyScene(nextData, nextOpts);
+      object3D.add(scene.object3D);
+      replayControls();
+    },
+    { flush: 'post' },
+  );
 
   // Each watcher forwards a single concern to the vanilla scene. `flush: 'sync'`
   // would over-react during typical UI changes; the default post-flush is fine
@@ -96,8 +133,12 @@ export function useGalaxyView(
   onScopeDispose(() => scene.dispose());
 
   return {
-    object3D: scene.object3D,
-    scene,
+    object3D,
+    /**
+     * Live-getter on the underlying scene: after a rebuild the inner reference
+     * changes, so consumers reaching `view.scene` get the current one.
+     */
+    get scene() { return scene; },
     dimming,
     gasDim,
     haloVisible,

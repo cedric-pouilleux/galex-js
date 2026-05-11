@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { resolveArmCadence, writeSpiralTangent } from './ArmCadence.js';
 import type { ArmLayerOptions } from './ArmCadence.js';
 import {
@@ -146,24 +145,4 @@ export function buildGasStreaksBuffers({
 /** Material def for the stretched gas-streak particles. */
 export function createGasStreaksMaterialDef(): ShaderMaterialDef {
   return createPointsMaterialDef(STRETCH_VERT, STRETCH_FRAG);
-}
-
-/**
- * Builds a `THREE.Points` for the gas streaks layer. TresJS callers consume
- * `buildGasStreaksBuffers` and `createGasStreaksMaterialDef` directly.
- */
-export function createGasStreaks(opts: GasStreaksOptions): THREE.Points {
-  const buffers = buildGasStreaksBuffers(opts);
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position',    new THREE.BufferAttribute(buffers.positions, 3));
-  geo.setAttribute('aColor',      new THREE.BufferAttribute(buffers.colors,    3));
-  geo.setAttribute('aSize',       new THREE.BufferAttribute(buffers.sizes,     1));
-  geo.setAttribute('aTangent',    new THREE.BufferAttribute(buffers.tangents,  2));
-  geo.setAttribute('aStretch',    new THREE.BufferAttribute(buffers.stretches, 1));
-  geo.setAttribute('aVisibility', new THREE.BufferAttribute(buffers.visibility, 1));
-
-  const points = new THREE.Points(geo, new THREE.ShaderMaterial(createGasStreaksMaterialDef()));
-  points.frustumCulled = false;
-  points.name = 'gasStreaks';
-  return points;
 }

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { effectScope, nextTick } from 'vue';
+import { effectScope, nextTick, ref } from 'vue';
 import * as THREE from 'three';
 import { createGalaxyData } from '../../core/GalaxyData.js';
 import { useGalaxyView } from './UseGalaxyView.js';
@@ -21,18 +21,25 @@ const baseOpts = {
 
 /** Shorthand for reading a uniform value off a Three Material. */
 function uniformOf(layer: THREE.Object3D, name: string): number | undefined {
-  const mesh = layer as THREE.Mesh;
-  const mat = mesh.material as THREE.ShaderMaterial | undefined;
-  return mat?.uniforms?.[name]?.value as number | undefined;
+  if (!(layer instanceof THREE.Mesh) && !(layer instanceof THREE.Points)) return undefined;
+  const mat = layer.material;
+  if (Array.isArray(mat) || !(mat instanceof THREE.ShaderMaterial)) return undefined;
+  return mat.uniforms?.[name]?.value as number | undefined;
 }
 
-test('useGalaxyView returns object3D + underlying scene', () => {
+/** The scene's children live one Group deeper now (view.object3D wraps scene.object3D). */
+function sceneChildren(view: ReturnType<typeof useGalaxyView>): THREE.Object3D[] {
+  return view.scene.object3D.children;
+}
+
+test('useGalaxyView returns a stable object3D wrapping the underlying scene', () => {
   const scope = effectScope();
   scope.run(() => {
     const view = useGalaxyView(createGalaxyData(baseOpts));
     assert.ok(view.object3D);
     assert.ok(view.scene);
-    assert.equal(view.object3D, view.scene.object3D);
+    // The wrapper contains the scene group as its single child.
+    assert.equal(view.object3D.children[0], view.scene.object3D);
   });
   scope.stop();
 });
@@ -41,7 +48,7 @@ test('mutating dimming ref propagates to every layer uniform', async () => {
   const scope = effectScope();
   await scope.run(async () => {
     const view = useGalaxyView(createGalaxyData(baseOpts));
-    const field = view.object3D.children.find((c) => (c as THREE.Points).geometry?.attributes?.aSize)!;
+    const field = sceneChildren(view).find((c) => c instanceof THREE.Points && c.geometry.attributes.aSize)!;
     assert.equal(uniformOf(field, 'uDim'), 1.0);
 
     view.dimming.value = 0.3;
@@ -55,11 +62,11 @@ test('mutating gasDim only affects gas layers, not the star field', async () => 
   const scope = effectScope();
   await scope.run(async () => {
     const view = useGalaxyView(createGalaxyData(baseOpts));
-    // Find the named gas layers.
-    const armGlow    = view.object3D.children.find((c) => c.name === 'armGlow')!;
-    const gasStreaks = view.object3D.children.find((c) => c.name === 'gasStreaks')!;
-    const nebulae    = view.object3D.children.find((c) => c.name === 'nebulae')!;
-    const innerRing  = view.object3D.children.find((c) => c.name === 'innerRing')!;
+    const children = sceneChildren(view);
+    const armGlow    = children.find((c) => c.name === 'armGlow')!;
+    const gasStreaks = children.find((c) => c.name === 'gasStreaks')!;
+    const nebulae    = children.find((c) => c.name === 'nebulae')!;
+    const innerRing  = children.find((c) => c.name === 'innerRing')!;
 
     view.gasDim.value = 0.45;
     await nextTick();
@@ -76,7 +83,7 @@ test('mutating haloVisible toggles the halo mesh visibility', async () => {
   const scope = effectScope();
   await scope.run(async () => {
     const view = useGalaxyView(createGalaxyData(baseOpts));
-    const halo = view.object3D.children.find((c) => c.name === 'halo')!;
+    const halo = sceneChildren(view).find((c) => c.name === 'halo')!;
     assert.equal(halo.visible, true);
 
     view.haloVisible.value = false;
@@ -94,8 +101,8 @@ test('mutating coreVisible toggles the inner ring and center dust group together
   const scope = effectScope();
   await scope.run(async () => {
     const view = useGalaxyView(createGalaxyData({ ...baseOpts, fillCenter: true }));
-    const innerRing = view.object3D.children.find((c) => c.name === 'innerRing')!;
-    const centerDust = view.object3D.children.find((c) => c.name === 'centerDust')!;
+    const innerRing  = sceneChildren(view).find((c) => c.name === 'innerRing')!;
+    const centerDust = sceneChildren(view).find((c) => c.name === 'centerDust')!;
     assert.equal(innerRing.visible, true);
     assert.equal(centerDust.visible, true);
 
@@ -116,19 +123,24 @@ test('mutating visibilityField updates the per-particle visibility attribute', a
   const scope = effectScope();
   await scope.run(async () => {
     const view = useGalaxyView(createGalaxyData(baseOpts));
-    const field = view.object3D.children.find((c) => (c as THREE.Points).geometry?.attributes?.aVisibility) as THREE.Points;
-    const visAttr = field.geometry.attributes.aVisibility as THREE.BufferAttribute;
+    const field = sceneChildren(view).find(
+      (c) => c instanceof THREE.Points && c.geometry.attributes.aVisibility,
+    );
+    assert.ok(field instanceof THREE.Points);
+    const visAttr = field.geometry.attributes.aVisibility;
+    assert.ok(visAttr instanceof THREE.BufferAttribute);
+    const visArray = visAttr.array as Float32Array;
     // Initially every particle is fully visible.
-    assert.equal((visAttr.array as Float32Array)[0], 1);
+    assert.equal(visArray[0], 1);
 
     view.visibilityField.value = { focals: [{ i: 999, k: 999 }], range: 1 };
     await nextTick();
     // A focal far outside the disk hides every particle.
-    assert.equal((visAttr.array as Float32Array)[0], 0);
+    assert.equal(visArray[0], 0);
 
     view.visibilityField.value = null;
     await nextTick();
-    assert.equal((visAttr.array as Float32Array)[0], 1);
+    assert.equal(visArray[0], 1);
   });
   scope.stop();
 });
@@ -137,7 +149,7 @@ test('mutating clipping toggles the clip uniforms', async () => {
   const scope = effectScope();
   await scope.run(async () => {
     const view = useGalaxyView(createGalaxyData(baseOpts));
-    const field = view.object3D.children.find((c) => (c as THREE.Points).geometry?.attributes?.aSize)!;
+    const field = sceneChildren(view).find((c) => c instanceof THREE.Points && c.geometry.attributes.aSize)!;
     assert.equal(uniformOf(field, 'uClipActive'), 0);
 
     view.clipping.value = {
@@ -151,6 +163,31 @@ test('mutating clipping toggles the clip uniforms', async () => {
     view.clipping.value = { active: false };
     await nextTick();
     assert.equal(uniformOf(field, 'uClipActive'), 0);
+  });
+  scope.stop();
+});
+
+test('changing galaxyData rebuilds the scene under the same wrapper, replaying controls', async () => {
+  const scope = effectScope();
+  await scope.run(async () => {
+    const galaxy = ref(createGalaxyData({ ...baseOpts, seed: 1 }));
+    const view = useGalaxyView(galaxy);
+    const wrapper = view.object3D;
+    const sceneObjectBefore = view.scene.object3D;
+    // Set a non-default control so we can verify it survives the rebuild.
+    view.dimming.value = 0.42;
+    await nextTick();
+
+    galaxy.value = createGalaxyData({ ...baseOpts, seed: 2 });
+    await nextTick();
+
+    // Wrapper identity is stable — TresPrimitive bindings survive.
+    assert.equal(view.object3D, wrapper);
+    // Inner scene group is fresh (a new createGalaxyScene call).
+    assert.notEqual(view.scene.object3D, sceneObjectBefore);
+    // Controls replayed onto the rebuilt scene.
+    const field = sceneChildren(view).find((c) => c instanceof THREE.Points && c.geometry.attributes.aSize)!;
+    assert.equal(uniformOf(field, 'uDim'), 0.42);
   });
   scope.stop();
 });

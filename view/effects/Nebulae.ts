@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { resolveArmCadence } from './ArmCadence.js';
 import type { ArmLayerOptions } from './ArmCadence.js';
 import { NEBULA_PALETTE, NEBULA_VERT, NEBULA_FRAG, createPointsMaterialDef } from './Shaders.js';
@@ -89,27 +88,7 @@ export function buildNebulaeBuffers({
   return { positions, colors, sizes, visibility, count: N };
 }
 
-/** Material def for the nebulae layer — reusable by both Three impératif and TresJS. */
+/** Material def for the nebulae layer — consumed by both the imperative composer and TresJS. */
 export function createNebulaeMaterialDef(): ShaderMaterialDef {
   return createPointsMaterialDef(NEBULA_VERT, NEBULA_FRAG);
-}
-
-/**
- * Builds a `THREE.Points` cluster of HII / reflection / planetary nebulae
- * sprites laid out along the spiral arms — convenience for the impératif
- * Three.js path. TresJS callers consume `buildNebulaeBuffers` and
- * `createNebulaeMaterialDef` directly.
- */
-export function createNebulae(opts: NebulaeOptions): THREE.Points {
-  const buffers = buildNebulaeBuffers(opts);
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position',    new THREE.BufferAttribute(buffers.positions, 3));
-  geo.setAttribute('aColor',      new THREE.BufferAttribute(buffers.colors,    3));
-  geo.setAttribute('aSize',       new THREE.BufferAttribute(buffers.sizes,     1));
-  geo.setAttribute('aVisibility', new THREE.BufferAttribute(buffers.visibility, 1));
-
-  const points = new THREE.Points(geo, new THREE.ShaderMaterial(createNebulaeMaterialDef()));
-  points.frustumCulled = false;
-  points.name = 'nebulae';
-  return points;
 }

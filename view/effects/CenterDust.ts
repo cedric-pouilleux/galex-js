@@ -23,12 +23,6 @@ export type CenterDustBuffers = {
   count: number;
 };
 
-export type CenterDust = {
-  readonly object3D: THREE.Group;
-  readonly discMaterial: THREE.ShaderMaterial;
-  readonly dustMaterial: THREE.ShaderMaterial;
-};
-
 /**
  * Computes the spiraled dust cloud buffers — each particle follows a randomly
  * picked arm's spiral angle with a wide angular noise so it stays diffuse.
@@ -127,41 +121,4 @@ export function createCenterDiscMaterialDef({
 /** Material def for the spiraled dust particles (stretched sprite shader). */
 export function createCenterDustMaterialDef(): ShaderMaterialDef {
   return createPointsMaterialDef(STRETCH_VERT, STRETCH_FRAG);
-}
-
-/**
- * Builds the central bulge as a `THREE.Group` containing a warm disc + a
- * spiraled dust cloud. TresJS callers compose with `createCenterDiscGeometry` +
- * `createCenterDiscMaterialDef` for the disc and `buildCenterDustBuffers` +
- * `createCenterDustMaterialDef` for the dust.
- */
-export function createCenterDust(opts: CenterDustOptions): CenterDust {
-  const { innerRadius = 5, color = 0xffc580, intensity = 0.55 } = opts;
-  const buffers = buildCenterDustBuffers(opts);
-
-  const object3D = new THREE.Group();
-  object3D.name = 'centerDust';
-
-  // 1) Wide warm disc that fades far inside its polygon edge so its halo
-  //    blends into the inner ring and the arms.
-  const discMaterial = new THREE.ShaderMaterial(createCenterDiscMaterialDef({ color, intensity }));
-  const disc = new THREE.Mesh(createCenterDiscGeometry(innerRadius), discMaterial);
-  disc.rotation.x = -Math.PI / 2;
-  object3D.add(disc);
-
-  // 2) Spiraled dust cloud diluting into the arms (seamless join at the rim).
-  const dustGeo = new THREE.BufferGeometry();
-  dustGeo.setAttribute('position',    new THREE.BufferAttribute(buffers.positions, 3));
-  dustGeo.setAttribute('aColor',      new THREE.BufferAttribute(buffers.colors,    3));
-  dustGeo.setAttribute('aSize',       new THREE.BufferAttribute(buffers.sizes,     1));
-  dustGeo.setAttribute('aTangent',    new THREE.BufferAttribute(buffers.tangents,  2));
-  dustGeo.setAttribute('aStretch',    new THREE.BufferAttribute(buffers.stretches, 1));
-  dustGeo.setAttribute('aVisibility', new THREE.BufferAttribute(buffers.visibility, 1));
-
-  const dustMaterial = new THREE.ShaderMaterial(createCenterDustMaterialDef());
-  const dust = new THREE.Points(dustGeo, dustMaterial);
-  dust.frustumCulled = false;
-  object3D.add(dust);
-
-  return { object3D, discMaterial, dustMaterial };
 }

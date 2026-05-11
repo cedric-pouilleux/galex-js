@@ -26,17 +26,17 @@ Vue d'ensemble des entrées publiques de la lib, classées par cible.
 
 ### Couches `view/effects/`
 
-Chaque factory expose 3 niveaux d'API (voir [Architecture](../architecture/)) :
+Chaque couche expose deux niveaux d'API (voir [Architecture](../architecture/)) — la pure-data et la material-def. Le mount Three.js est centralisé dans `createGalaxyScene` (vanilla) et dans `<GalaxyScene>` / `useGalaxyLayers` (Vue) ; un caller qui voudrait composer manuellement passe par ces deux niveaux :
 
-| Couche | `buildXBuffers` | `createXMaterialDef` | `createX` (mount Three) |
-|---|---|---|---|
-| Star field | — (utilise les buffers de `GalaxyData`) | `createStarFieldMaterialDef` | `createStarField` |
-| Halo | — (utilise `CircleGeometry`) | `createHaloMaterialDef` | `createHalo` |
-| Nébuleuses | `buildNebulaeBuffers` | `createNebulaeMaterialDef` | `createNebulae` |
-| Streaks gaz | `buildGasStreaksBuffers` | `createGasStreaksMaterialDef` | `createGasStreaks` |
-| Halo de bras | `buildArmGlowBuffers` | `createArmGlowMaterialDef` | `createArmGlow` |
-| Anneau interne | `buildInnerRingBuffers` | `createInnerRingMaterialDef` | `createInnerRing` |
-| Bulbe central | `buildCenterDustBuffers` + `createCenterDiscGeometry` | `createCenterDiscMaterialDef` + `createCenterDustMaterialDef` | `createCenterDust` |
+| Couche | `buildXBuffers` (pure-data) | `createXMaterialDef` |
+|---|---|---|
+| Star field | — (alias des buffers de `GalaxyData`) + `createStarFieldVisibility` | `createStarFieldMaterialDef` |
+| Halo | — (`createHaloGeometry`) | `createHaloMaterialDef` |
+| Nébuleuses | `buildNebulaeBuffers` | `createNebulaeMaterialDef` |
+| Streaks gaz | `buildGasStreaksBuffers` | `createGasStreaksMaterialDef` |
+| Halo de bras | `buildArmGlowBuffers` | `createArmGlowMaterialDef` |
+| Anneau interne | `buildInnerRingBuffers` | `createInnerRingMaterialDef` |
+| Bulbe central | `buildCenterDustBuffers` + `createCenterDiscGeometry` | `createCenterDiscMaterialDef` + `createCenterDustMaterialDef` |
 
 ## Vue / TresJS — `view-vue/`
 
