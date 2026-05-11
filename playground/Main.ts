@@ -13,7 +13,7 @@ import { PLAYER_HIGHLIGHT_RGB } from './Player.js';
 import { startRenderLoop } from './RenderLoop.js';
 import { createRegenerate } from './Regenerate.js';
 import { createMeasureTool } from './MeasureTool.js';
-import { createPaintSelection } from './PaintSelection.js';
+import { createRectSelection } from './RectSelection.js';
 import type { Cube } from '../core/CubeGrid.js';
 
 function elementById<T extends HTMLElement>(id: string): T {
@@ -96,6 +96,12 @@ function currentHudMode(): string {
   return 'orbite';
 }
 
+/** Crosshair wherever precise pointing matters (closeup star picking, measure tool). */
+function updateCanvasCursor(): void {
+  const precise = currentWorld.closeup.isActive() || measureTool.isEnabled();
+  canvas.classList.toggle('crosshair', precise);
+}
+
 function closeupOnShown(): void {
   // Closeup.enter dims the galaxy via setDimming. Hide the wireframes so the
   // inspected cube is the only thing in focus.
@@ -107,6 +113,7 @@ function closeupOnShown(): void {
   hud.setMode(currentHudMode());
   hud.setHover(null);
   toggleGridEl.disabled = true;
+  updateCanvasCursor();
 }
 
 function closeupOnHidden(): void {
@@ -124,6 +131,7 @@ function closeupOnHidden(): void {
   measureTool.setHoveredStar(currentWorld.galaxyData, null);
   starTooltip.style.display = 'none';
   toggleGridEl.disabled = false;
+  updateCanvasCursor();
 
   // If closeup was opened from plan view, restore it on exit.
   if (restorePlanViewAfterCloseup) {
@@ -172,7 +180,7 @@ toggleFogEl.addEventListener('change', () => {
     fog.enable(currentWorld, camerasBag, planView.active);
     fogRangeRowEl.classList.add('active');
   } else {
-    fog.disable(currentWorld, toggleGridEl.checked);
+    fog.disable(currentWorld, toggleGridEl.checked, camerasBag);
     fogRangeRowEl.classList.remove('active');
   }
 });
@@ -184,19 +192,68 @@ togglePlanViewEl.addEventListener('change', () => {
 
 // ─── Distance measurement tool ──────────────────────────────────────────────
 
-const measureTool = createMeasureTool();
+function isStarInVisibleCube(starIndex: number): boolean {
+  const { galaxyData, player } = currentWorld;
+  const { positions } = galaxyData.data;
+  const { i, j, k } = galaxyData.grid.worldToCube(
+    positions[starIndex * 3], positions[starIndex * 3 + 1], positions[starIndex * 3 + 2],
+  );
+  return fog.status(galaxyData.grid.get(i, j, k), player) === 'visible';
+}
+
+const measureTool = createMeasureTool({
+  onPathComputed: (cubes) => currentWorld.closeup.isActive() && currentWorld.closeup.setTrajectoryCubes(cubes),
+  onPathCleared:  ()      => currentWorld.closeup.isActive() && currentWorld.closeup.setTrajectoryCubes([]),
+  isStarMeasurable: isStarInVisibleCube,
+  onFocusTrajectory: (info) => {
+    if (currentWorld.closeup.isActive()) currentWorld.closeup.refocus(info.cubes);
+    else openCloseupForCubes(info.cubes);
+  },
+});
 // Parented to galaxyScene so the markers track the galaxy's idle rotation —
 // re-parented after every regen (see setCurrentWorld below).
 currentWorld.galaxyScene.object3D.add(measureTool.object3D);
 measureTool.setResolution(window.innerWidth, window.innerHeight);
 
 const toggleMeasureEl = elementById<HTMLInputElement>('toggleMeasure');
+const measureOptionsEl = elementById<HTMLElement>('measureOptionsRow');
+const measureRangeEl = elementById<HTMLInputElement>('measureRange');
+const measureRangeValueEl = elementById<HTMLElement>('measureRangeValue');
+const measureRangeRowEl = elementById<HTMLElement>('measureRangeRow');
+const measureModeRadios = Array.from(
+  document.querySelectorAll<HTMLInputElement>('input[name="measureMode"]'),
+);
+
+function syncMeasureRangeUi(): void {
+  const value = Number(measureRangeEl.value);
+  measureRangeValueEl.textContent = `${value} al`;
+  // The slider is only meaningful in 'path' sub-mode; dim it otherwise.
+  const inPathMode = measureTool.starMode() === 'path';
+  measureRangeRowEl.classList.toggle('disabled', !inPathMode);
+}
+
 toggleMeasureEl.addEventListener('change', () => {
-  // Measurement coexists with closeup — in closeup the click picks individual
-  // stars, in orbit it picks cubes. No need to swap modes here.
   measureTool.setEnabled(toggleMeasureEl.checked);
+  measureOptionsEl.classList.toggle('active', toggleMeasureEl.checked);
   hud.setMode(currentHudMode());
+  updateCanvasCursor();
 });
+
+for (const radio of measureModeRadios) {
+  radio.addEventListener('change', () => {
+    if (!radio.checked) return;
+    measureTool.setStarMode(radio.value === 'path' ? 'path' : 'direct');
+    syncMeasureRangeUi();
+  });
+}
+
+measureTool.setPathRangeLightYears(currentWorld.galaxyData, Number(measureRangeEl.value));
+measureRangeEl.addEventListener('input', () => {
+  const value = Number(measureRangeEl.value);
+  measureRangeValueEl.textContent = `${value} al`;
+  measureTool.setPathRangeLightYears(currentWorld.galaxyData, value);
+});
+syncMeasureRangeUi();
 
 fogRangeEl.addEventListener('input', () => {
   fog.range = Number(fogRangeEl.value);
@@ -245,7 +302,7 @@ function playerHighlight() {
 }
 
 /**
- * Shared entry point for the single-cube click and the paint-selection release.
+ * Shared entry point for the single-cube click and the rect-selection release.
  * Forces a swap back to the perspective camera (close-up is perspective-only)
  * before opening; plan view is restored on close-up exit (see closeupOnHidden).
  */
@@ -286,11 +343,12 @@ function handleCanvasClick(): void {
 }
 
 /**
- * Drag started on a selectable cube → paint-selection (cubes highlighted
- * during the drag, close-up opened on release). Drag started on empty space
+ * Drag started on a selectable cube → rectangular selection (anchor + current
+ * highlighted bright, rectangle outline highlighted faint, close-up opened on
+ * release for every cube inside the rectangle). Drag started on empty space
  * falls through to the orbit controls.
  */
-const paintSelection = createPaintSelection({
+const rectSelection = createRectSelection({
   canvas,
   controls,
   cubeSize: currentWorld.galaxyData.opts.cubeSize,
@@ -303,9 +361,14 @@ const paintSelection = createPaintSelection({
     if (!cube) return null;
     return fog.status(cube, player) === 'visible' ? cube : null;
   },
-  cubeCenter: (cube) => currentWorld.galaxyData.grid.cubeToWorldCenter(cube.i, cube.j, cube.k),
+  cubeCenterAt: (i, j, k) => currentWorld.galaxyData.grid.cubeToWorldCenter(i, j, k),
+  getSelectableCube: (i, j, k) => {
+    const cube = currentWorld.galaxyData.grid.get(i, j, k);
+    if (!cube) return null;
+    return fog.status(cube, currentWorld.player) === 'visible' ? cube : null;
+  },
 });
-paintSelection.bind({
+rectSelection.bind({
   // The composable already suppresses the picker's click when the gesture
   // started on a cube — release is the single entry point even for one cube.
   onRelease: openCloseupForCubes,
@@ -318,7 +381,7 @@ const genPanel = setupGenPanel({
     // Move long-lived overlays out of galaxyScene before the old world is disposed:
     // disposeObject3DTree would otherwise traverse and free their GPU resources.
     scene.attach(measureTool.object3D);
-    paintSelection.clear();
+    rectSelection.clear();
     regenerate(arg);
   },
 });
@@ -339,7 +402,7 @@ const regenerate = createRegenerate({
     // then re-parent to the fresh galaxyScene so markers keep tracking the rotation.
     measureTool.clear();
     w.galaxyScene.object3D.add(measureTool.object3D);
-    paintSelection.setParent(w.galaxyScene.object3D);
+    rectSelection.setParent(w.galaxyScene.object3D);
   },
 });
 

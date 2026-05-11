@@ -105,11 +105,12 @@ export default defineConfig({
 |---|---|
 | Clic gauche **dans le vide** + drag | Rotation orbite |
 | Clic droit + drag | Rotation orbite (alternative) |
-| Clic gauche **sur un cube** + drag | Sélection multi-cubes (peinture, cf. [PaintSelection](docs/primitives/paint-selection.md)) |
+| Clic gauche **sur un cube** + drag | Sélection rectangulaire multi-cubes (cf. [RectSelection](docs/primitives/rect-selection.md)) |
 | Clic court sur un cube | Close-up sur le cube |
-| Relâcher d'une peinture | Close-up sur tous les cubes peints (champ d'étoiles fusionné) |
+| Relâcher d'un rectangle | Close-up sur tous les cubes contenus dans le rectangle (champ d'étoiles fusionné) |
 | Molette | Zoom |
 | `Esc` | Sortir du close-up |
+| `Espace` (en mode mesure) | Cadre sur le trajet courant — dim tout le reste (cf. [MeasureTool / Focus trajet](docs/primitives/measure-tool.md#focus-trajet-touche-espace)) |
 | Toggle « Brouillard de guerre » | Active le visibility-field multi-focal + masque halo + noyau galactique |
 | Toggle « Vue plateau 2D » | Bascule en caméra orthographique vue de dessus |
 | Toggle « Mesurer une distance » | Active le [MeasureTool](docs/primitives/measure-tool.md) — cube↔cube en orbite, étoile↔étoile en close-up |
@@ -140,7 +141,7 @@ view-vue/       # Vue + TresJS
   components/     # <GalaxyScene> drop-in
 
 playground/     # Sandbox de démo (consomme les briques ci-dessus)
-  Main.ts, Cameras, Picker, PaintSelection, MeasureTool, Fog, PlanView, Closeup…
+  Main.ts, Cameras, Picker, RectSelection, MeasureTool, Fog, PlanView, Closeup…
 
 tools/          # CLI utilitaires
   CheckDeterminism  # Lint statique : interdit Math.sin/cos/etc dans core/
@@ -173,7 +174,7 @@ npm run docs:build        # Build statique des docs
 - [Quick start](docs/quick-start.md) — premier usage côté Node, vanilla Three, Vue
 - [Architecture](docs/architecture/index.md) — pipeline data → buffers → scène, 3 niveaux d'API
 - [Compatibilité cross-engine](docs/compatibility/index.md) — pourquoi le déterminisme bit-stable tient
-- [Primitives de plateau](docs/primitives/index.md) — `CubeMarker`, `VisibilityField`, `Closeup`, et les compositions sandbox ([PaintSelection](docs/primitives/paint-selection.md), [MeasureTool](docs/primitives/measure-tool.md))
+- [Primitives de plateau](docs/primitives/index.md) — `CubeMarker`, `VisibilityField`, `Closeup`, et les compositions sandbox ([RectSelection](docs/primitives/rect-selection.md), [MeasureTool](docs/primitives/measure-tool.md))
 - [Référence API](docs/api/index.md) — entrée par symbole exporté
 - [Intégration Vue / TresJS](docs/integrations/vue-tres.md) — patterns réactifs
 

@@ -58,7 +58,7 @@ export default defineConfig({
         {
           text: 'Compositions sandbox',
           items: [
-            { text: 'PaintSelection', link: '/primitives/paint-selection' },
+            { text: 'RectSelection', link: '/primitives/rect-selection' },
             { text: 'MeasureTool', link: '/primitives/measure-tool' },
           ],
         },
@@ -89,6 +89,7 @@ export default defineConfig({
             { text: 'Vue d\'ensemble', link: '/api/' },
             { text: 'createGalaxyData', link: '/api/galaxy-data' },
             { text: 'starNeighbors', link: '/api/star-neighbors' },
+            { text: 'findStarPath', link: '/api/pathfinding' },
             { text: 'Astronomy', link: '/api/astronomy' },
             { text: 'createGalaxyScene', link: '/api/galaxy-scene' },
             { text: 'useGalaxyLayers', link: '/api/use-galaxy-layers' },

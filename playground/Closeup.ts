@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { GalaxyData } from '../core/GalaxyData.js';
-import type { Cube } from '../core/CubeGrid.js';
+import { cubeKey, type Cube } from '../core/CubeGrid.js';
 import type { GalaxyScene } from '../view/GalaxyScene.js';
 import { tweenCamera } from './CloseupTween.js';
 import { prepareCloseupField } from '../view/closeup/Buffers.js';
@@ -44,6 +44,29 @@ export type Closeup = {
   activeCubes(): readonly Cube[];
   /** Opens a close-up for a single cube or a marquee-selected set of cubes. */
   enter(cubes: Cube | readonly Cube[], opts?: { highlight?: CloseupHighlight | null }): void;
+  /**
+   * Sets the cubes rendered in the high-fidelity sub-buffer. **Replaces** the
+   * current set wholesale — cubes from a previous trajectory (or from the
+   * initial selection that aren't on the new trajectory) drop to the dimmed
+   * background layer.
+   *
+   * Pass an empty array to revert to the cubes initially passed to `enter()` —
+   * used by the caller when an active measurement is cleared so the close-up
+   * goes back to its opening state.
+   *
+   * No-op when no close-up is active, or when the resulting set is identical
+   * to the current one.
+   */
+  setTrajectoryCubes(trajectoryCubes: readonly Cube[]): void;
+  /**
+   * Re-frames the active close-up's camera onto the bbox of `cubes` and
+   * **replaces** the rendered field with those cubes — every non-trajectory
+   * star fades out. Dimming / clipping stay applied; only the camera, the
+   * active bounds, and the field's cubes change.
+   *
+   * No-op when no close-up is active or when `cubes` is empty.
+   */
+  refocus(cubes: readonly Cube[]): void;
   exit(opts?: { instant?: boolean }): void;
   update(time: number): void;
   starAtPointer(pointer: THREE.Vector2): CloseupStarHit | null;
@@ -61,10 +84,15 @@ type SelectionBounds = {
 };
 
 type ActiveState = {
+  /** Cubes from `enter()` — fallback target when `setTrajectoryCubes([])` is called. */
+  initialCubes: readonly Cube[];
+  /** Cubes currently in the rendered field. Drives `prepareCloseupField`. */
   cubes: readonly Cube[];
   worldCenter: THREE.Vector3;
   worldRadius: number;
   field: CloseupField | null;
+  /** Preserved across field rebuilds so the player marker keeps glowing. */
+  highlight: CloseupHighlight | null;
   savedCamPos: THREE.Vector3;
   savedTarget: THREE.Vector3;
   savedMin: number;
@@ -120,12 +148,63 @@ export function createCloseup({ camera, controls, galaxyData, galaxyScene }: Clo
     hoverRing.hide();
 
     active = {
+      initialCubes: cubeList,
       cubes: cubeList,
       worldCenter: bounds.worldCenter,
       worldRadius: bounds.worldRadius,
       field,
+      highlight,
       savedCamPos, savedTarget, savedMin, savedMax,
     };
+  }
+
+  function setTrajectoryCubes(trajectoryCubes: readonly Cube[]): void {
+    if (!active) return;
+    // Empty trajectory → revert to the cubes the close-up was opened on.
+    // Otherwise the field is replaced wholesale with the trajectory — every
+    // non-trajectory cube (including earlier trajectories and any marquee
+    // extras) drops out of the high-fidelity buffer and dims with the rest.
+    applyFieldCubes(trajectoryCubes.length === 0 ? active.initialCubes : trajectoryCubes);
+  }
+
+  /** Internal: dedup `cubes`, rebuild the close-up field, swap it in. */
+  function applyFieldCubes(cubes: readonly Cube[]): void {
+    if (!active) return;
+    const seen = new Set<string>();
+    const uniq: Cube[] = [];
+    for (const c of cubes) {
+      const key = cubeKey(c.i, c.j, c.k);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      uniq.push(c);
+    }
+    if (sameCubeKeys(uniq, active.cubes)) return;
+
+    const newField = prepareCloseupField(uniq, galaxyData, active.highlight);
+    if (newField === null) return;
+
+    // Swap fields in-place: the new render order matches the previous one (the
+    // hover ring already lives in the scene and stays on top).
+    if (active.field) {
+      galaxyScene.object3D.remove(active.field.points);
+      active.field.points.geometry.dispose();
+      (active.field.points.material as THREE.Material).dispose();
+    }
+    galaxyScene.object3D.add(newField.points);
+    active.cubes = uniq;
+    active.field = newField;
+  }
+
+  function refocus(cubes: readonly Cube[]): void {
+    if (!active || cubes.length === 0) return;
+    // Replace the entire field with the focus cubes so every non-trajectory
+    // star (initial close-up cubes, marquee extras, previous trajectories…)
+    // drops to the dimmed background layer.
+    applyFieldCubes(cubes);
+    const bounds = selectionBounds(cubes);
+    active.worldCenter.copy(bounds.worldCenter);
+    active.worldRadius = bounds.worldRadius;
+    frameCameraOnBounds(bounds);
   }
 
   function exit({ instant = false }: { instant?: boolean } = {}): void {
@@ -265,10 +344,20 @@ export function createCloseup({ camera, controls, galaxyData, galaxyScene }: Clo
     isActive,
     activeCubes: () => active?.cubes ?? [],
     enter,
+    setTrajectoryCubes,
+    refocus,
     exit,
     update,
     starAtPointer,
     showHoverRing,
     hideHoverRing,
   };
+}
+
+/** Cheap equality between two cube lists by `cubeKey` set membership. */
+function sameCubeKeys(a: readonly Cube[], b: readonly Cube[]): boolean {
+  if (a.length !== b.length) return false;
+  const keys = new Set(a.map((c) => cubeKey(c.i, c.j, c.k)));
+  for (const c of b) if (!keys.has(cubeKey(c.i, c.j, c.k))) return false;
+  return true;
 }

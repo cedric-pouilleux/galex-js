@@ -6,7 +6,7 @@ La lib expose **trois primitives neutres** pour bâtir une vue rapprochée d'un 
 
 | Symbole | Rôle |
 |---|---|
-| `prepareCloseupField(cubes, galaxyData, highlight?)` | Construit un sous-buffer (positions/colors/sizes/temps + noms Bayer + `aSeed` dérivé du seed galaxie + `globalIndices`) et le matérialise en `THREE.Points` avec le shader haute fidélité. Accepte un cube unique ou un tableau (sélection multiple — voir [PaintSelection](./paint-selection)). Retourne `null` si la sélection est vide. |
+| `prepareCloseupField(cubes, galaxyData, highlight?)` | Construit un sous-buffer (positions/colors/sizes/temps + noms Bayer + `aSeed` dérivé du seed galaxie + `globalIndices`) et le matérialise en `THREE.Points` avec le shader haute fidélité. Accepte un cube unique ou un tableau (sélection multiple — voir [RectSelection](./rect-selection)). Retourne `null` si la sélection est vide. |
 | `createHoverRing()` | Anneau de sélection : billboard auto-redimensionné, **anneau fin + glow radial doux**, pulsation discrète (appeler `update(time)` chaque frame). Teinté par température (`blackbodyRGB`), bord doux pour ne pas masquer l'étoile. Compose `createSelectionRing` en interne. |
 | `createSelectionRing(options?)` | Primitive partagée : quad billboard piloté par un shader (anneau Gaussien + glow radial additif). Couleur libre, pulsation optionnelle. Réutilisé par le hover ring (pulsé, teinté par température) et par les markers "locked" du caller (statique, couleur d'accent). |
 | `STAR_VERT` / `STAR_FRAG` | Shader GLSL haute fidélité (giant boost, spikes, halo, body tightness, core fleck, variabilité Cepheid). 6 traits décorrélés par étoile depuis `aSeed`. |
@@ -68,7 +68,7 @@ Si `highlight.index` n'est pas dans la sélection (l'union de `starIndices` de c
 
 Quand la sélection contient plusieurs cubes, leurs étoiles sont concaténées dans un seul `THREE.Points`. Le tableau `globalIndices` (typage `Int32Array`) trace, pour chaque sommet local, l'index global dans `galaxyData.data` — c'est la traduction local→global à utiliser après un raycast (mesures de distance, highlight, etc.). Le caller décide du cadrage caméra (bounding-box des centres de cubes) — la lib ne fait que produire les buffers.
 
-Le playground compose ça avec [PaintSelection](./paint-selection) (drag-démarré-sur-cube → peinture) ; le close-up multi-cubes s'ouvre au relâcher.
+Le playground compose ça avec [RectSelection](./rect-selection) (drag-démarré-sur-cube → rectangle anchor↔current) ; le close-up multi-cubes s'ouvre au relâcher avec tous les cubes contenus dans le rectangle.
 
 ## Composer le concept "joueur"
 
@@ -199,6 +199,17 @@ function enter(cube: Cube, highlight: CloseupHighlight | null) {
 ```
 
 À la sortie : symétrique. `setDimming(1.0)`, `setClipping(false)`, dispose du `field.points`.
+
+### Refocus et overlay trajet
+
+Le playground étend l'orchestrateur avec deux opérations pilotées par le measure tool, exposées sur le close-up :
+
+| Méthode | Comportement | Cas d'usage |
+|---|---|---|
+| `setTrajectoryCubes(cubes)` | Rebuild le sous-buffer avec **uniquement** ces cubes. Tout cube hors `cubes` (initial du close-up, ancien trajet, marquee) retombe au dim galaxie. `cubes = []` revient aux `initialCubes` passés à `enter()`. | Suivre la trajectoire courante du measure tool (`onPathComputed` / `onPathCleared` câblés dessus). |
+| `refocus(cubes)` | Mêmes effets que `setTrajectoryCubes(cubes)` **plus** un tween caméra sur la bbox des cubes. Le dim global et le clipping restent appliqués. | Geste utilisateur "focus sur le trajet" — touche `Espace` quand une mesure est complète. |
+
+Sémantique **replace** (pas merge) : c'est ce qui garantit qu'après un nouveau trajet, les étoiles du précédent disparaissent du sous-buffer haute fidélité. Voir [MeasureTool / Overlay trajet](./measure-tool#overlay-trajet-sur-le-close-up) pour le wiring.
 
 ### Cleanup symétrique
 

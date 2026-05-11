@@ -31,8 +31,8 @@ Ces deux modules vivent dans `playground/` (pas dans la lib), mais sont document
 
 | Composition | Rôle | Page |
 |---|---|---|
-| `createPaintSelection` | Sélection multi-cubes en peinture (drag-démarré-sur-cube → highlight des cubes survolés) | [→](./paint-selection) |
-| `createMeasureTool` | Mesure de distance à deux ancres — cubes en orbite, étoiles en close-up | [→](./measure-tool) |
+| `createRectSelection` | Sélection multi-cubes rectangulaire (drag-démarré-sur-cube → rectangle anchor/current + outline) | [→](./rect-selection) |
+| `createMeasureTool` | Mesure de distance à deux ancres — cubes en orbite, étoiles en close-up (direct ou trajet multi-sauts) | [→](./measure-tool) |
 
 ## Exemple — incarner un joueur
 

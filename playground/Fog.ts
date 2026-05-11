@@ -32,7 +32,13 @@ export type Fog = {
   active: boolean;
   range: number;
   enable(world: FogWorld, cameras: FogCameras, planViewActive: boolean): void;
-  disable(world: FogWorld, occupiedLinesVisibleAfter: boolean): void;
+  /**
+   * Restores the cosmetic layers and clears the visibility field. When
+   * `cameras` is provided, the perspective camera target also tweens back to
+   * the galaxy centre — symmetric counterpart to `enable`'s player-centric
+   * tween. Omit it when the world is about to be torn down (e.g. regen).
+   */
+  disable(world: FogWorld, occupiedLinesVisibleAfter: boolean, cameras?: FogCameras): void;
   rebuild(world: FogWorld, planViewActive: boolean): void;
   setPlanViewBoost(active: boolean): void;
   status(cube: Cube | null | undefined, player: FogPlayer): FogStatus;
@@ -67,16 +73,20 @@ export function createFog(): Fog {
     world.occupiedLines.visible = false;
 
     rebuild(world, planViewActive);
-    tweenCameraToPlayer(world, cameras);
+    const playerCenter = galaxyCenterOfCube(world);
+    tweenCameraTarget(playerCenter, cameras);
   }
 
-  function disable(world: FogWorld, occupiedLinesVisibleAfter: boolean): void {
+  function disable(world: FogWorld, occupiedLinesVisibleAfter: boolean, cameras?: FogCameras): void {
     state.active = false;
     world.galaxyScene.setVisibilityField(null);
     world.galaxyScene.setHaloVisible(true);
     world.galaxyScene.setCoreVisible(true);
     world.occupiedLines.visible = occupiedLinesVisibleAfter;
     disposeGrid(world.galaxyScene);
+    // Symmetric counterpart to enable(): re-center the orbit on the galaxy
+    // origin so the user doesn't stay framed on the green player cube.
+    if (cameras) tweenCameraTarget(new THREE.Vector3(0, 0, 0), cameras);
   }
 
   function rebuild(world: FogWorld, planViewActive: boolean): void {
@@ -123,21 +133,31 @@ export function createFog(): Fog {
   }
 
   /**
-   * Lerps the perspective camera target toward the player cube on fog enable.
-   * Pure animation — no state retained beyond the current rAF chain.
+   * Returns the player cube center in world space, accounting for the galaxy
+   * group's transform (so the orbit target lands on the correct point even
+   * during the galaxy's idle rotation).
    */
-  function tweenCameraToPlayer(world: FogWorld, cameras: FogCameras): void {
+  function galaxyCenterOfCube(world: FogWorld): THREE.Vector3 {
     const { player, galaxyData, galaxyScene } = world;
-    const { perspectiveCamera, perspectiveControls } = cameras;
-
-    const center = galaxyData.grid.cubeToWorldCenter(player.cube.i, player.cube.j, player.cube.k);
-    const worldCenter = new THREE.Vector3(center.x, center.y, center.z);
+    const c = galaxyData.grid.cubeToWorldCenter(player.cube.i, player.cube.j, player.cube.k);
+    const worldCenter = new THREE.Vector3(c.x, c.y, c.z);
     galaxyScene.object3D.updateMatrixWorld();
     worldCenter.applyMatrix4(galaxyScene.object3D.matrixWorld);
+    return worldCenter;
+  }
 
+  /**
+   * Lerps the perspective camera target toward `worldCenter`. On enable the
+   * camera also moves 65% of the way toward the player (closer focus); on
+   * disable it preserves its current offset and only re-centers the target so
+   * the user keeps their zoom level.
+   */
+  function tweenCameraTarget(worldCenter: THREE.Vector3, cameras: FogCameras): void {
+    const { perspectiveCamera, perspectiveControls } = cameras;
     const fromTarget = perspectiveControls.target.clone();
     const fromCamPos = perspectiveCamera.position.clone();
-    const camOffset = perspectiveCamera.position.clone().sub(perspectiveControls.target).multiplyScalar(0.35);
+    const offsetScale = state.active ? 0.35 : 1;
+    const camOffset = fromCamPos.clone().sub(fromTarget).multiplyScalar(offsetScale);
     const toCamPos = worldCenter.clone().add(camOffset);
     const t0 = performance.now();
 

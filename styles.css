@@ -17,6 +17,8 @@ canvas#view {
   cursor: grab;
 }
 canvas#view:active { cursor: grabbing; }
+canvas#view.crosshair,
+canvas#view.crosshair:active { cursor: crosshair; }
 
 #hud, #legend {
   position: fixed;
@@ -330,6 +332,50 @@ canvas#view:active { cursor: grabbing; }
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
   transform: translate(-50%, -50%);
+}
+.measure-label--warning {
+  border-color: rgba(255, 120, 120, 0.65);
+  color: #ffdada;
+  box-shadow: 0 0 14px rgba(255, 120, 120, 0.30);
+}
+
+.measure-options {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+  padding-left: 22px;
+  pointer-events: auto;
+}
+.measure-options.active { display: flex; }
+.measure-options .measure-mode {
+  display: flex;
+  gap: 12px;
+}
+.measure-options .radio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #aab5cb;
+  cursor: pointer;
+}
+.measure-options .radio input[type="radio"] {
+  accent-color: #6cf2ff;
+  cursor: pointer;
+}
+.range-row--inline {
+  display: flex;
+  margin-top: 0;
+  padding-left: 0;
+}
+.range-row--inline.disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+.range-row--inline .range-value {
+  width: auto;
+  min-width: 36px;
 }
 
 #legend {

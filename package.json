@@ -33,7 +33,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vue-tsc --noEmit && tsx tools/CheckDeterminism.ts && tsx --test core/*.test.ts view/**/*.test.ts view-vue/**/*.test.ts",
+    "test": "vue-tsc --noEmit && tsx tools/CheckDeterminism.ts && tsx --test core/*.test.ts view/**/*.test.ts view-vue/**/*.test.ts playground/*.test.ts",
     "typecheck": "vue-tsc --noEmit",
     "test:determinism": "tsx tools/CheckDeterminism.ts",
     "test:cross": "playwright test",

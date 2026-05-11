@@ -35,7 +35,7 @@ export function createCameras(canvas: HTMLElement): PlaygroundCameras {
   perspectiveControls.maxDistance = 280;
   perspectiveControls.target.set(0, 0, 0);
   // Galaxy stays centred — panning is permanently off. Both mouse buttons
-  // rotate; the host's PaintSelection composable opts out by toggling
+  // rotate; the host's RectSelection composable opts out by toggling
   // `controls.enabled` when a drag starts on a populated cube.
   perspectiveControls.enablePan = false;
   perspectiveControls.mouseButtons = {
