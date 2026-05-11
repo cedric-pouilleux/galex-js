@@ -7,7 +7,8 @@ La lib expose **trois primitives neutres** pour bâtir une vue rapprochée d'un 
 | Symbole | Rôle |
 |---|---|
 | `prepareCloseupField(cubes, galaxyData, highlight?)` | Construit un sous-buffer (positions/colors/sizes/temps + noms Bayer + `aSeed` dérivé du seed galaxie + `globalIndices`) et le matérialise en `THREE.Points` avec le shader haute fidélité. Accepte un cube unique ou un tableau (sélection multiple — voir [PaintSelection](./paint-selection)). Retourne `null` si la sélection est vide. |
-| `createHoverRing()` | Anneau billboard auto-redimensionné sur l'étoile survolée. Teinté par température (`blackbodyRGB`). |
+| `createHoverRing()` | Anneau de sélection : billboard auto-redimensionné, **anneau fin + glow radial doux**, pulsation discrète (appeler `update(time)` chaque frame). Teinté par température (`blackbodyRGB`), bord doux pour ne pas masquer l'étoile. Compose `createSelectionRing` en interne. |
+| `createSelectionRing(options?)` | Primitive partagée : quad billboard piloté par un shader (anneau Gaussien + glow radial additif). Couleur libre, pulsation optionnelle. Réutilisé par le hover ring (pulsé, teinté par température) et par les markers "locked" du caller (statique, couleur d'accent). |
 | `STAR_VERT` / `STAR_FRAG` | Shader GLSL haute fidélité (giant boost, spikes, halo, body tightness, core fleck, variabilité Cepheid). 6 traits décorrélés par étoile depuis `aSeed`. |
 
 ::: code-group
@@ -85,6 +86,10 @@ Aucun concept *player* dans la lib — le caller compose le sens.
 ## Hover ring branché sur le raycaster
 
 Le hover ring exposé par `createHoverRing` est purement visuel : c'est au caller de raycaster les `THREE.Points` et d'appeler `showOn / hide`. Pour que le hit-testing fonctionne sur des sprites, on règle `raycaster.params.Points.threshold` proportionnellement à la taille moyenne d'étoile.
+
+::: info Pulsation
+Le ring respire grâce à un shader paramétré par le temps. **Appeler `hoverRing.update(time)` une fois par frame** dans la boucle de rendu (sinon il reste figé, sans clignotement). Le `time` peut être issu d'un `THREE.Clock` ou de l'argument du `requestAnimationFrame` (converti en secondes).
+:::
 
 ::: code-group
 

@@ -84,6 +84,8 @@ export function startRenderLoop(deps: RenderLoopDeps): void {
       });
     }
 
+    measureTool.update(activeCamera(), t);
+
     // Idle slow-rotation only when the user isn't hovering a clickable cube and
     // no dynamic mode is active.
     if (!hoverWire.visible && !closeup.isActive() && !fog.active && !planView.active) {

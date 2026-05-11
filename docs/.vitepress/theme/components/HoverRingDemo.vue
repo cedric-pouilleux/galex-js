@@ -73,6 +73,7 @@ function tick(t: number) {
     }
     lastSwap = t;
   }
+  hoverRing.update(cameraStub as unknown as THREE.Camera, t * 0.001);
   raf = requestAnimationFrame(tick);
 }
 onMounted(() => { raf = requestAnimationFrame(tick); });

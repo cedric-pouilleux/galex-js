@@ -1,21 +1,20 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { Line2 } from 'three/addons/lines/Line2.js';
-import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
-import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { worldUnitsToLightYears } from '../core/Astronomy.js';
+import { createSelectionRing, type SelectionRing } from '../view/closeup/SelectionRing.js';
+import { createDashedPath, type DashedPath } from '../view/paths/DashedPath.js';
 import type { Cube } from '../core/CubeGrid.js';
 import type { GalaxyData } from '../core/GalaxyData.js';
 
 const COLOR = 0x6cf2ff;
 const MARKER_BASE_RADIUS = 0.45;
-
-// Per-mode marker look. Star mode is a soft halo that hugs the star sprite;
-// cube mode is a solid bead centred in the cube.
-const LOOKS = {
-  cube: { scale: 1.00, opacity: 0.90 },
-  star: { scale: 0.55, opacity: 0.35 },
-} as const;
+const CUBE_MARKER_OPACITY = 0.90;
+/**
+ * Constant apparent ring size in star mode. Mesh scale is recomputed each
+ * frame as `STAR_RING_SCREEN_BASE × distance(mesh, camera)`, so the locked
+ * marker keeps the same angular size on screen regardless of camera distance.
+ */
+const STAR_RING_SCREEN_BASE = 0.05;
 
 export type MeasureMode = 'cube' | 'star';
 
@@ -39,6 +38,11 @@ export type MeasureTool = {
    * segment (pointer leaves a star, closeup exits, …). No-op outside star mode.
    */
   setHoveredStar(galaxy: GalaxyData, starIndex: number | null): void;
+  /**
+   * Per-frame hook from the render loop. Reorients the star-mode rings towards
+   * the camera (so the billboard stays facing the viewer) and propagates time.
+   */
+  update(camera: THREE.Camera, time: number): void;
   clear(): void;
   setResolution(width: number, height: number): void;
   dispose(): void;
@@ -62,23 +66,12 @@ export function createMeasureTool(): MeasureTool {
 
   const markerA = createMarker();
   const markerB = createMarker();
-  object3D.add(markerA.mesh, markerB.mesh);
+  object3D.add(markerA.group, markerB.group);
 
-  const lineGeometry = new LineGeometry();
-  lineGeometry.setPositions([0, 0, 0, 0, 0, 0]);
-  const lineMaterial = new LineMaterial({
-    color: COLOR,
-    linewidth: 2,
-    transparent: true,
-    opacity: 0.9,
-    depthTest: false,
-  });
-  lineMaterial.resolution.set(window.innerWidth, window.innerHeight);
-  const line = new Line2(lineGeometry, lineMaterial);
-  line.computeLineDistances();
-  line.renderOrder = 1100;
-  line.visible = false;
-  object3D.add(line);
+  // Static dashed path (no animation) — communicates "measurement" without
+  // competing visually with moving game elements like fleet trajectories.
+  const segment: DashedPath = createDashedPath({ color: COLOR });
+  object3D.add(segment.object3D);
 
   const labelEl = document.createElement('div');
   labelEl.className = 'measure-label';
@@ -96,39 +89,28 @@ export function createMeasureTool(): MeasureTool {
   // ── Rendering primitives ──────────────────────────────────────────────────
 
   function hideAll(): void {
-    markerA.mesh.visible = false;
-    markerB.mesh.visible = false;
-    line.visible = false;
+    markerA.hide();
+    markerB.hide();
+    segment.hide();
     label.visible = false;
   }
 
   function hideSegment(): void {
-    markerB.mesh.visible = false;
-    line.visible = false;
+    markerB.hide();
+    segment.hide();
     label.visible = false;
   }
 
-  function showMarker(marker: Marker, at: THREE.Vector3): void {
-    marker.mesh.position.copy(at);
-    marker.mesh.visible = true;
+  function showMarker(marker: Marker, anchor: Anchor, currentMode: MeasureMode): void {
+    marker.show(anchor.center, currentMode);
   }
 
   function drawSegment(a: THREE.Vector3, b: THREE.Vector3, cubeSize: number): void {
-    lineGeometry.setPositions([a.x, a.y, a.z, b.x, b.y, b.z]);
-    line.computeLineDistances();
-    line.visible = true;
+    segment.setEndpoints(a, b);
+    segment.show();
     label.position.set((a.x + b.x) * 0.5, (a.y + b.y) * 0.5, (a.z + b.z) * 0.5);
     labelEl.textContent = formatDistance(cubeSize, Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z));
     label.visible = true;
-  }
-
-  function applyMarkerLook(): void {
-    if (mode === null) return;
-    const look = LOOKS[mode];
-    for (const m of [markerA, markerB]) {
-      m.mesh.scale.setScalar(look.scale);
-      m.setOpacity(look.opacity);
-    }
   }
 
   /** B endpoint actually used for rendering: locked (cube) or hovered (star). */
@@ -137,16 +119,16 @@ export function createMeasureTool(): MeasureTool {
   }
 
   function render(galaxy: GalaxyData): void {
-    if (anchorA === null) { hideAll(); return; }
-    showMarker(markerA, anchorA.center);
+    if (anchorA === null || mode === null) { hideAll(); return; }
+    showMarker(markerA, anchorA, mode);
 
     const b = effectiveB();
     if (b === null) { hideSegment(); return; }
 
     // Star mode relies on the close-up's own hover ring to mark B — adding a
     // second halo here would just clutter the view.
-    if (mode === 'cube') showMarker(markerB, b.center);
-    else markerB.mesh.visible = false;
+    if (mode === 'cube') showMarker(markerB, b, mode);
+    else markerB.hide();
 
     drawSegment(anchorA.center, b.center, galaxy.opts.cubeSize);
   }
@@ -154,7 +136,6 @@ export function createMeasureTool(): MeasureTool {
   function switchMode(next: MeasureMode): void {
     if (mode !== null && mode !== next) clear();
     mode = next;
-    applyMarkerLook();
   }
 
   // ── Public API ────────────────────────────────────────────────────────────
@@ -227,12 +208,16 @@ export function createMeasureTool(): MeasureTool {
     if (labelEl.parentNode) labelEl.parentNode.removeChild(labelEl);
     markerA.dispose();
     markerB.dispose();
-    lineGeometry.dispose();
-    lineMaterial.dispose();
+    segment.dispose();
   }
 
   function setResolution(width: number, height: number): void {
-    lineMaterial.resolution.set(width, height);
+    segment.setResolution(width, height);
+  }
+
+  function update(camera: THREE.Camera, time: number): void {
+    markerA.update(camera, time);
+    markerB.update(camera, time);
   }
 
   return {
@@ -242,6 +227,7 @@ export function createMeasureTool(): MeasureTool {
     pickCube,
     pickStar,
     setHoveredStar,
+    update,
     clear,
     setResolution,
     dispose,
@@ -278,26 +264,79 @@ function formatDistance(cubeSize: number, distanceWorld: number): string {
 // ── Markers ─────────────────────────────────────────────────────────────────
 
 type Marker = {
-  mesh: THREE.Mesh;
-  setOpacity(opacity: number): void;
+  /** Group containing both primitives — add this to the scene graph. */
+  group: THREE.Group;
+  /** Position + reveal the right primitive for the current mode. */
+  show(at: THREE.Vector3, currentMode: MeasureMode): void;
+  /** Hide both primitives. */
+  hide(): void;
+  /** Per-frame hook: recomputes ring scale (constant on-screen size) and faces the camera. */
+  update(camera: THREE.Camera, time: number): void;
   dispose(): void;
 };
 
+/**
+ * A marker has two visual modalities under the same anchor:
+ * - **cube mode** — solid additive bead at the cube centre (visible from orbit
+ *   distances where a ring would be unreadable).
+ * - **star mode** — soft thin selection ring (shared shader with the close-up
+ *   hover) sized to the locked star's `aSize` so it sits just outside the
+ *   sprite.
+ *
+ * Switching mode hides one and shows the other; both share the same parent
+ * group so positioning/transforms stay coherent.
+ */
 function createMarker(): Marker {
-  const geometry = new THREE.SphereGeometry(MARKER_BASE_RADIUS, 16, 12);
-  const material = new THREE.MeshBasicMaterial({
+  const group = new THREE.Group();
+
+  const sphereGeometry = new THREE.SphereGeometry(MARKER_BASE_RADIUS, 16, 12);
+  const sphereMaterial = new THREE.MeshBasicMaterial({
     color: COLOR,
     transparent: true,
-    opacity: LOOKS.cube.opacity,
+    opacity: CUBE_MARKER_OPACITY,
     depthTest: false,
     blending: THREE.AdditiveBlending,
   });
-  const mesh = new THREE.Mesh(geometry, material);
-  mesh.renderOrder = 1099;
-  mesh.visible = false;
-  return {
-    mesh,
-    setOpacity: (opacity) => { material.opacity = opacity; },
-    dispose: () => { geometry.dispose(); material.dispose(); },
-  };
+  const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+  sphereMesh.renderOrder = 1099;
+  sphereMesh.visible = false;
+  group.add(sphereMesh);
+
+  const ring: SelectionRing = createSelectionRing({ color: COLOR, pulse: false });
+  ring.object.renderOrder = 1099;
+  group.add(ring.object);
+
+  function show(at: THREE.Vector3, currentMode: MeasureMode): void {
+    if (currentMode === 'cube') {
+      sphereMesh.position.copy(at);
+      sphereMesh.visible = true;
+      ring.hide();
+    } else {
+      ring.setPosition(at.x, at.y, at.z);
+      // Scale is set per-frame in update() so the apparent size stays constant.
+      ring.show();
+      sphereMesh.visible = false;
+    }
+  }
+
+  function hide(): void {
+    sphereMesh.visible = false;
+    ring.hide();
+  }
+
+  function update(camera: THREE.Camera, time: number): void {
+    if (!ring.object.visible) return;
+    const distance = ring.object.position.distanceTo(camera.position);
+    ring.setSize(STAR_RING_SCREEN_BASE * distance);
+    ring.update(camera, time);
+  }
+
+  function dispose(): void {
+    sphereGeometry.dispose();
+    sphereMaterial.dispose();
+    (ring.object.geometry as THREE.BufferGeometry).dispose();
+    (ring.object.material as THREE.Material).dispose();
+  }
+
+  return { group, show, hide, update, dispose };
 }

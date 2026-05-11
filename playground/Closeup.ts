@@ -84,7 +84,10 @@ export function createCloseup({ camera, controls, galaxyData, galaxyScene }: Clo
   let active: ActiveState | null = null;
 
   const raycaster = new THREE.Raycaster();
-  raycaster.params.Points!.threshold = 0.18;
+  // Tight threshold — the cursor must land essentially on the star sprite, not
+  // anywhere near it. Loose values made selection feel imprecise (rings/HUD
+  // popping up while pointing into empty space).
+  raycaster.params.Points!.threshold = 0.04;
 
   const hoverRing = createHoverRing();
 
@@ -160,6 +163,7 @@ export function createCloseup({ camera, controls, galaxyData, galaxyScene }: Clo
       const mat = active.field.points.material as THREE.ShaderMaterial;
       if (mat.uniforms?.uTime) mat.uniforms.uTime.value = time;
     }
+    hoverRing.update(camera, time);
 
     updateFrontClippingPlane(active.worldCenter, active.worldRadius);
   }

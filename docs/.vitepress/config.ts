@@ -52,6 +52,7 @@ export default defineConfig({
             { text: 'CubeMarker', link: '/primitives/cube-marker' },
             { text: 'Visibility field', link: '/primitives/visibility-field' },
             { text: 'Closeup', link: '/primitives/closeup' },
+            { text: 'Paths', link: '/primitives/paths' },
           ],
         },
         {

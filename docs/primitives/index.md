@@ -22,6 +22,8 @@ Tout identifiant exporté qui contiendrait *player*, *enemy*, *team*, *fog of wa
 | `tierMapForVisibilityField` | Helper pur qui projette les focals sur la grille | [→](./visibility-field#tiermap) |
 | `prepareCloseupField` | Sous-buffer + shader haute fidélité pour la vue rapprochée d'un ou plusieurs cubes | [→](./closeup) |
 | `createHoverRing` | Anneau billboard pour survol d'étoile dans une vue rapprochée | [→](./closeup) |
+| `createSelectionRing` | Anneau shader partagé (hover ring + markers locked) — couleur libre, pulsation optionnelle | [→](./closeup) |
+| `createDashedPath` | Chemin pointillé A→B — défilement des tirets + pulse d'opacité optionnels, hooks d'extension caller | [→](./paths) |
 
 ## Compositions du sandbox
 

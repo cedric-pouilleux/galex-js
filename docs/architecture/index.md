@@ -17,8 +17,11 @@ view/                           # Three.js impératif
 ├── CubeMarker.ts, GridHelper.ts
 ├── closeup/                    # Primitives neutres pour vue rapprochée
 │   ├── Buffers.ts              # prepareCloseupField (sous-buffer + shader)
-│   ├── HoverRing.ts            # createHoverRing
+│   ├── HoverRing.ts            # createHoverRing (compose SelectionRing)
+│   ├── SelectionRing.ts        # createSelectionRing (anneau shader partagé)
 │   └── StarShader.ts           # GLSL haute fidélité
+├── paths/                      # Primitives "chemin entre deux points"
+│   └── DashedPath.ts           # createDashedPath (statique ou animé via options)
 └── effects/                    # Factories par couche : buffers + materialDef + mount
     ├── Nebulae.ts, Halo.ts, CenterDust.ts, InnerRing.ts, GasStreaks.ts, ArmGlow.ts
     ├── ArmCadence.ts, Shaders.ts
