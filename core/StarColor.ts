@@ -4,6 +4,21 @@ import type { Rng } from './Random.js';
 export type SpectralClass = 'O' | 'B' | 'A' | 'F' | 'G' | 'K' | 'M';
 
 /**
+ * Radial multiplier applied to the arm/field temperature bias before sampling.
+ *
+ * Receives normalized galactic radius (0 = centre, 1 = outer edge) and returns
+ * a multiplier:
+ *  - 1.0 = no change (current behaviour)
+ *  - <1  = shifts the local population toward older/cooler (M/K dominant)
+ *  - >1  = shifts the local population toward younger/hotter (more B/A/F)
+ *
+ * The resulting `armBias` is clamped to [0, 1] before reaching
+ * `sampleTemperature`. Must be pure for determinism — same input → same output,
+ * no `Math.random()`.
+ */
+export type TemperatureGradient = (radiusNorm: number) => number;
+
+/**
  * Blackbody radiation → RGB approximation (Mitchell Charity, 2001).
  * Bit-stable across engines (uses det-math, not native Math.pow/log).
  */

@@ -59,11 +59,12 @@ core/                       # zone bit-stable, runtime-agnostic, importable côt
 ├── StarColor.ts            # blackbodyRGB / sampleTemperature
 ├── StarGenerator.ts        # generateGalaxy
 ├── CubeGrid.ts             # indexation spatiale + raycast
+├── StarNames.ts            # nameStarInCube — identifiant canonique persistable
 └── *.test.ts
 
 view/                       # rendu Three.js
 ├── GalaxyScene.ts          # createGalaxyScene : surface publique côté rendu
-├── CubeMarker.ts, GridHelper.ts, StarNames.ts
+├── CubeMarker.ts, GridHelper.ts
 ├── closeup/                # primitives close-up (Buffers, HoverRing, StarShader)
 └── effects/                # factories par couche
 ```

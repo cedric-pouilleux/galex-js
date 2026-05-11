@@ -63,7 +63,16 @@
       "PowerShell(npx tsx tools/Benchmark.ts)",
       "WebFetch(domain:www.npmjs.com)",
       "Bash(gh search *)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:cedric-pouilleux.github.io)",
+      "PowerShell(npx vue-tsc --noEmit 2>&1)",
+      "PowerShell(npx tsx --test core/TemperatureGradient.test.ts 2>&1)",
+      "PowerShell(npx tsx --test core/GalaxyDeterminism.test.ts 2>&1)",
+      "PowerShell(npx tsx tools/CheckDeterminism.ts 2>&1)",
+      "PowerShell(npx tsx --test view/StarNames.test.ts 2>&1)",
+      "Bash(git mv *)",
+      "PowerShell(Move-Item view/StarNames.test.ts core/StarNames.test.ts)",
+      "PowerShell(npx tsx --test core/StarNames.test.ts 2>&1)"
     ]
   }
 }

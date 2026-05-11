@@ -3,6 +3,7 @@ import { createCubeGrid } from './CubeGrid.js';
 import { mulberry32, pickSeed, deriveSubseed } from './Random.js';
 import type { CubeGrid } from './CubeGrid.js';
 import type { GalaxyBuffers } from './StarGenerator.js';
+import type { TemperatureGradient } from './StarColor.js';
 
 /**
  * Generation options. Everything that affects the seed-derived buffers lives
@@ -23,12 +24,17 @@ export type GalaxyDataOptions = {
   fillCenter?: boolean;
   /** null/undefined = pick a fresh one. */
   seed?: number | null;
+  /** Radial modulation of the per-star temperature bias. `null` = uniform. */
+  temperatureGradient?: TemperatureGradient | null;
 };
 
-export type ResolvedGalaxyOptions = Required<Omit<GalaxyDataOptions, 'seed' | 'thickness'>> & {
-  thickness: number;
-  seed: number | null;
-};
+export type ResolvedGalaxyOptions =
+  Required<Omit<GalaxyDataOptions, 'seed' | 'thickness' | 'temperatureGradient'>>
+  & {
+    thickness: number;
+    seed: number | null;
+    temperatureGradient: TemperatureGradient | null;
+  };
 
 export type GalaxyData = {
   readonly seed: number;
@@ -69,6 +75,7 @@ export function createGalaxyData(opts: GalaxyDataOptions = {}): GalaxyData {
     fieldRatio:  opts.fieldRatio  ?? 0.30,
     fillCenter:  opts.fillCenter  ?? false,
     thickness,
+    temperatureGradient: opts.temperatureGradient ?? null,
   };
 
   const seed = (resolved.seed === null || resolved.seed === undefined)
@@ -92,6 +99,7 @@ export function createGalaxyData(opts: GalaxyDataOptions = {}): GalaxyData {
     count, radius, thickness, innerRadius, minDistance,
     arms, spin, spread, fieldRatio, fillCenter,
     armSpinJ, armPhaseJ,
+    temperatureGradient: resolved.temperatureGradient,
     rng: starsRng,
   });
 

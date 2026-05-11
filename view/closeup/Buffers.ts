@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { mulberry32, deriveSubseed } from '../../core/Random.js';
-import { nameStarInCube } from '../StarNames.js';
+import { nameStarInCube } from '../../core/StarNames.js';
 import { getDevicePixelRatio } from '../effects/Shaders.js';
 import type { GalaxyData } from '../../core/GalaxyData.js';
 import type { Cube } from '../../core/CubeGrid.js';

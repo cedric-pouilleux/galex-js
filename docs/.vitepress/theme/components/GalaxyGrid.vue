@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import GalaxyDemo from './GalaxyDemo.vue';
+import type { TemperatureGradient } from '../../../../core/StarColor';
 
 // Container that renders multiple GalaxyDemo cells in a responsive grid.
 // Each cell is configured by an entry in `items` — same prop shape as
@@ -14,6 +15,7 @@ defineProps<{
     spin?: number;
     spread?: number;
     fieldRatio?: number;
+    temperatureGradient?: TemperatureGradient | null;
     gasDensity?: number;
     cameraTilt?: number;
     static?: boolean;

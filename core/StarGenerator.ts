@@ -1,6 +1,7 @@
 import { blackbodyRGB, sampleTemperature } from './StarColor.js';
 import { detSin, detCos, detPow } from './DetMath.js';
 import type { Rng } from './Random.js';
+import type { TemperatureGradient } from './StarColor.js';
 
 export type GenerateGalaxyOptions = {
   count?: number;
@@ -18,6 +19,8 @@ export type GenerateGalaxyOptions = {
   fillCenter?: boolean;
   armSpinJ?: number[] | null;
   armPhaseJ?: number[] | null;
+  /** Radial modulation of the arm/field temperature bias. `null` = uniform behaviour. */
+  temperatureGradient?: TemperatureGradient | null;
   rng?: Rng;
 };
 
@@ -53,6 +56,7 @@ export function generateGalaxy({
   fillCenter = false,
   armSpinJ = null,
   armPhaseJ = null,
+  temperatureGradient = null,
   rng = Math.random,
 }: GenerateGalaxyOptions = {}): GalaxyBuffers {
   const positions = new Float32Array(count * 3);
@@ -152,7 +156,13 @@ export function generateGalaxy({
 
     // Field stars: older population (more red dwarfs).
     // Arm stars: younger, more hot/blue stars.
-    const armBias = isField ? 0.20 : 0.85;
+    // Radial gradient modulates the base bias when supplied (e.g. cooler in
+    // the bulge, hotter mid-disk). Clamped so an exotic curve cannot push the
+    // lerp factor outside the [0, 1] range `sampleTemperature` expects.
+    const baseArmBias = isField ? 0.20 : 0.85;
+    const armBias = temperatureGradient
+      ? Math.max(0, Math.min(1, baseArmBias * temperatureGradient(r / radius)))
+      : baseArmBias;
     const T = sampleTemperature(armBias, rng);
     const rgb = blackbodyRGB(T);
     const lum = detPow(T / 5778, 0.4) * (0.85 + rng() * 0.25);

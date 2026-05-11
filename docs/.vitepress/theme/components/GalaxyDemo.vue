@@ -3,6 +3,7 @@ import { computed, onMounted, onBeforeUnmount, ref, useTemplateRef } from 'vue';
 import { TresCanvas } from '@tresjs/core';
 import { createGalaxyData } from '../../../../core/GalaxyData';
 import type { GalaxyDataOptions } from '../../../../core/GalaxyData';
+import type { TemperatureGradient } from '../../../../core/StarColor';
 import { GalaxyScene } from '../../../../view-vue';
 import { useLazyMount } from './useLazyMount';
 
@@ -17,6 +18,7 @@ const props = withDefaults(defineProps<{
   spin?: number;
   spread?: number;
   fieldRatio?: number;
+  temperatureGradient?: TemperatureGradient | null;
   gasDensity?: number;
   height?: number;
   caption?: string;
@@ -43,6 +45,7 @@ const opts = computed<GalaxyDataOptions>(() => ({
   spin: props.spin,
   spread: props.spread,
   fieldRatio: props.fieldRatio,
+  temperatureGradient: props.temperatureGradient,
 }));
 
 // IntersectionObserver gates canvas creation — no WebGL context until visible.

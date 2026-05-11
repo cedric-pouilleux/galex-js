@@ -9,11 +9,12 @@ core/                           # Données pures, déterministes, runtime-agnost
 ├── GalaxyData.ts               # createGalaxyData (entrée publique côté données)
 ├── DetMath.ts, Visibility.ts
 ├── Random.ts, StarColor.ts, StarGenerator.ts, CubeGrid.ts
+├── StarNames.ts                # nameStarInCube — identifiant canonique persistable
 └── *.test.ts
 
 view/                           # Three.js impératif
 ├── GalaxyScene.ts              # createGalaxyScene (entrée publique côté rendu)
-├── CubeMarker.ts, GridHelper.ts, StarNames.ts
+├── CubeMarker.ts, GridHelper.ts
 ├── closeup/                    # Primitives neutres pour vue rapprochée
 │   ├── Buffers.ts              # prepareCloseupField (sous-buffer + shader)
 │   ├── HoverRing.ts            # createHoverRing

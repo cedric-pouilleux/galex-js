@@ -13,6 +13,7 @@ Vue d'ensemble des entrées publiques de la lib, classées par cible.
 | `detSin`, `detCos`, `detLog`, `detExp`, `detPow` | Math transcendantes bit-stables cross-engine. |
 | `computeVisibilityField`, `tierMapForVisibilityField` | Helpers purs de visibilité (pour décisions gameplay côté serveur). |
 | `blackbodyRGB`, `spectralClass`, `sampleTemperature` | Couleur d'étoile par température. |
+| `nameStarInCube` | Identifiant catalogue stable pour une étoile dans un cube (format `GX-E3N7-012`), persistable côté serveur. |
 
 ## Vanilla Three — `view/`
 
@@ -22,7 +23,6 @@ Vue d'ensemble des entrées publiques de la lib, classées par cible.
 | `createCubeMarker` | Marqueur autour d'un cube (cf. [primitives/cube-marker](../primitives/cube-marker)). |
 | `createCubeWireframe`, `createOccupiedGridLines`, `createVisibilityFieldLines` | Helpers grille (cf. [primitives/visibility-field](../primitives/visibility-field)). |
 | `prepareCloseupField`, `createHoverRing` | Primitives close-up (cf. [primitives/closeup](../primitives/closeup)). L'orchestration tween/dim/clip vit côté caller. |
-| `nameStarInCube` | Nommage Bayer-style d'une étoile dans un cube. |
 
 ### Couches `view/effects/`
 

@@ -25,8 +25,22 @@ type GalaxyDataOptions = {
   fieldRatio?: number;     // 0.30  — fraction d'étoiles hors bras (population âgée)
   fillCenter?: boolean;    // false — autoriser des étoiles dans innerRadius
   seed?: number | null;    // null  — null/undef = pioche un seed frais
+  temperatureGradient?:    // null  — modulation radiale du biais de température
+    TemperatureGradient | null;
 };
+
+type TemperatureGradient = (radiusNorm: number) => number;
 ```
+
+### `temperatureGradient`
+
+Fonction pure `(r/radius) → multiplicateur`. Le `armBias` interne (0.20 pour le champ, 0.85 pour les bras) est multiplié par la valeur retournée puis clampé à `[0, 1]` avant d'être passé à `sampleTemperature`. Conséquence :
+
+- retourner `1.0` partout = comportement par défaut.
+- retourner `<1` à un rayon donné = population locale plus vieille/froide (M/K dominantes).
+- retourner `>1` = population locale plus jeune/chaude (plus de B/A/F).
+
+La fonction **doit être pure** (même entrée → même sortie, pas de `Math.random()`) pour préserver le déterminisme. Voir [exemples visuels](../examples/options#temperaturegradient-gradient-radial-de-population).
 
 ## Sortie
 
