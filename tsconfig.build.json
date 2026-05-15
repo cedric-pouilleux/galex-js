@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "target":                           "ES2022",
+    "module":                           "ESNext",
+    "moduleResolution":                 "bundler",
+    "lib":                              ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx":                              "preserve",
+    "strict":                           true,
+    "skipLibCheck":                     true,
+    "esModuleInterop":                  true,
+    "allowSyntheticDefaultImports":     true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules":                  true,
+    "resolveJsonModule":                true,
+    "useDefineForClassFields":          true,
+
+    "declaration":         true,
+    "emitDeclarationOnly": true,
+    "declarationMap":      true,
+    "noEmit":              false,
+    "composite":           false,
+    "outDir":              "./dist",
+    "rootDir":             ".",
+    "types":               ["node"],
+    "tsBuildInfoFile":     null
+  },
+  "include": ["sim.ts", "core.ts", "index.ts", "core/**/*.ts", "view/**/*.ts", "view-vue/**/*.ts", "view-vue/**/*.vue"],
+  "exclude": [
+    "**/*.test.ts",
+    "vite.config.ts",
+    "vite.build.config.ts",
+    "playwright.config.ts",
+    "scripts/**",
+    "tools/**",
+    "playground/**",
+    "docs/**",
+    "dist",
+    "node_modules"
+  ]
+}

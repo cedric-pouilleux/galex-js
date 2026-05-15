@@ -28,4 +28,4 @@ coverage
 .env.*
 !.env.example
 
-.claude
+.claude/

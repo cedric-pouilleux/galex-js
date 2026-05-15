@@ -1,37 +1,23 @@
 {
-  "name": "galex-js",
+  "name": "@cedric-pouilleux/galexjs",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "description": "Deterministic procedural galaxy board — runs on Node, vanilla Three.js, and Vue/TresJS.",
-  "exports": {
-    "./core/*": "./core/*.ts",
-    "./view/*": "./view/*.ts",
-    "./view/effects/*": "./view/effects/*.ts",
-    "./view-vue": "./view-vue/index.ts",
-    "./view-vue/*": "./view-vue/*.ts",
-    "./view-vue/components/*.vue": "./view-vue/components/*.vue",
-    "./view-vue/composables/*": "./view-vue/composables/*.ts"
+  "license": "SEE LICENSE IN LICENSE",
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cedric-pouilleux/galex-js.git"
   },
-  "files": [
-    "core",
-    "view",
-    "view-vue",
-    "tsconfig.json",
-    "README.md"
-  ],
-  "peerDependencies": {
-    "three": "^0.160.0",
-    "vue": "^3.5.0",
-    "@tresjs/core": "^5.0.0"
-  },
-  "peerDependenciesMeta": {
-    "vue": { "optional": true },
-    "@tresjs/core": { "optional": true }
-  },
+  "homepage": "https://github.com/cedric-pouilleux/galex-js#readme",
+  "bugs": "https://github.com/cedric-pouilleux/galex-js/issues",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build -c vite.build.config.ts && vue-tsc -p tsconfig.build.json && node scripts/prepare-dist.mjs",
+    "build:js": "vite build -c vite.build.config.ts",
+    "build:types": "vue-tsc -p tsconfig.build.json",
+    "build:pkg": "node scripts/prepare-dist.mjs",
+    "build:playground": "vite build",
     "preview": "vite preview",
     "test": "vue-tsc --noEmit && tsx tools/CheckDeterminism.ts && tsx --test core/*.test.ts view/**/*.test.ts view-vue/**/*.test.ts playground/*.test.ts",
     "typecheck": "vue-tsc --noEmit",
@@ -40,7 +26,21 @@
     "example:server": "tsx tools/server-example/Index.ts",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:preview": "vitepress preview docs",
+    "publish:dist": "npm publish ./dist"
+  },
+  "peerDependencies": {
+    "@tresjs/core": "^5.0.0",
+    "three": "^0.184.0",
+    "vue": "^3.5.0"
+  },
+  "peerDependenciesMeta": {
+    "vue": {
+      "optional": true
+    },
+    "@tresjs/core": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
@@ -48,7 +48,7 @@
     "@types/node": "^25.6.0",
     "@types/three": "^0.184.0",
     "@vitejs/plugin-vue": "^6.0.6",
-    "three": "^0.160.0",
+    "three": "^0.184.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vite": "^5.4.0",

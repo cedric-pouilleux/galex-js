@@ -21,7 +21,7 @@ La compatibilité cross-engine repose sur de la math transcendante bit-stable (`
 ## Installation
 
 ```bash
-npm install galex-js three
+npm install @cedric-pouilleux/galexjs three
 # Pour la cible Vue / TresJS :
 npm install vue @tresjs/core
 ```
@@ -33,7 +33,7 @@ npm install vue @tresjs/core
 ### Backend Node — pure data
 
 ```ts
-import { createGalaxyData } from 'galex-js/core/GalaxyData';
+import { createGalaxyData } from '@cedric-pouilleux/galexjs/sim';
 
 const galaxy = createGalaxyData({ seed: 42, count: 15000, radius: 50 });
 
@@ -50,8 +50,7 @@ return { ok: true };
 
 ```ts
 import * as THREE from 'three';
-import { createGalaxyData } from 'galex-js/core/GalaxyData';
-import { createGalaxyScene } from 'galex-js/view/GalaxyScene';
+import { createGalaxyData, createGalaxyScene } from '@cedric-pouilleux/galexjs/core';
 
 const galaxy = createGalaxyData({ seed: 42, count: 15000, radius: 50 });
 const view = createGalaxyScene(galaxy, { gasDensity: 1.0 });
@@ -72,8 +71,7 @@ view.setVisibilityField({ focals: [cube], range: 3 });  // brouillard multi-foca
 ```vue
 <script setup lang="ts">
 import { TresCanvas } from '@tresjs/core';
-import { createGalaxyData } from 'galex-js/core/GalaxyData';
-import { GalaxyScene } from 'galex-js/view-vue';
+import { createGalaxyData, GalaxyScene } from '@cedric-pouilleux/galexjs';
 
 const galaxy = createGalaxyData({ seed: 42, count: 15000, radius: 50 });
 </script>
@@ -178,6 +176,23 @@ npm run docs:build        # Build statique des docs
 - [Référence API](docs/api/index.md) — entrée par symbole exporté
 - [Intégration Vue / TresJS](docs/integrations/vue-tres.md) — patterns réactifs
 
+## Trois entry points publiés
+
+| Import | Surface | Dépendances runtime |
+|---|---|---|
+| `@cedric-pouilleux/galexjs/sim` | Données pures déterministes (génération, grid, RNG, math bit-stable, visibilité, pathfinding) | aucune |
+| `@cedric-pouilleux/galexjs/core` | `/sim` + couche Three.js (scène, layers, effets, closeup, paths) | `three` |
+| `@cedric-pouilleux/galexjs` | `/core` + composables Vue + composant `<GalaxyScene>` | `three`, `vue`, `@tresjs/core` |
+
+## Publication
+
+```bash
+npm run build         # vite build (JS) + vue-tsc (.d.ts) + assemblage dist/package.json
+npm run publish:dist  # npm publish ./dist
+```
+
+Le `package.json` source omet volontairement le champ `exports` pour que les imports relatifs continuent de résoudre vers la source pendant le dev. C'est le script `scripts/prepare-dist.mjs` qui écrit un `dist/package.json` publish-ready avec la map d'exports complète.
+
 ## Licence
 
-Privée — sandbox interne.
+Tous droits réservés — voir le fichier [LICENSE](LICENSE). Le package est publié sur npm pour faciliter la distribution, mais aucune licence d'usage n'est accordée par défaut.

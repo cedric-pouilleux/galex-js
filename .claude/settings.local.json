@@ -73,7 +73,13 @@
       "Bash(git mv *)",
       "PowerShell(Move-Item view/StarNames.test.ts core/StarNames.test.ts)",
       "PowerShell(npx tsx --test core/StarNames.test.ts 2>&1)",
-      "Bash(curl -s -o NUL -w \"%{http_code}\" http://localhost:5174/)"
+      "Bash(curl -s -o NUL -w \"%{http_code}\" http://localhost:5174/)",
+      "Bash(gh api *)",
+      "PowerShell(gh api repos/cedric-pouilleux/stellex-js/contents --jq '.[].name')",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(npm pack *)",
+      "Bash(npm ls *)"
     ]
   }
 }
