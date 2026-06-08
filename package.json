@@ -1,6 +1,6 @@
 {
   "name": "@cedric-pouilleux/galexjs",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "type": "module",
   "description": "Deterministic procedural galaxy board — runs on Node, vanilla Three.js, and Vue/TresJS.",
   "license": "SEE LICENSE IN LICENSE",

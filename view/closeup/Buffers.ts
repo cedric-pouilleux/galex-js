@@ -2,12 +2,27 @@ import * as THREE from 'three';
 import { mulberry32, deriveSubseed } from '../../core/Random.js';
 import { nameStarInCube } from '../../core/StarNames.js';
 import { getDevicePixelRatio } from '../effects/Shaders.js';
-import type { GalaxyData } from '../../core/GalaxyData.js';
 import type { Cube } from '../../core/CubeGrid.js';
 import { STAR_VERT, STAR_FRAG } from './StarShader.js';
 
 const DEFAULT_HIGHLIGHT_SIZE_MUL = 2.4;
 const REGULAR_STAR_SIZE_MUL = 1.5;
+
+/**
+ * Minimal star source consumed by {@link prepareCloseupField}. A `GalaxyData`
+ * is assignable to it, but a backend-built fragment (fog-of-war slice with no
+ * seed/grid) can satisfy it directly — only these fields are read. `seed` seeds
+ * the per-cube trait variation; `temps` is optional (drives the hot-star tint).
+ */
+export type CloseupFieldSource = {
+  readonly seed: number;
+  readonly data: {
+    readonly positions: ArrayLike<number>;
+    readonly colors: ArrayLike<number>;
+    readonly sizes: ArrayLike<number>;
+    readonly temps?: ArrayLike<number>;
+  };
+};
 
 /**
  * Optional highlight applied to one star inside the inspected selection.
@@ -42,6 +57,7 @@ type CloseupBuffers = {
   sizes: Float32Array;
   temps: Float32Array;
   seeds: Float32Array;
+  visibility: Float32Array;
   globalIndices: Int32Array;
   names: string[];
 };
@@ -58,7 +74,7 @@ type CloseupBuffers = {
  */
 export function prepareCloseupField(
   cubes: Cube | readonly Cube[],
-  galaxyData: GalaxyData,
+  galaxyData: CloseupFieldSource,
   highlight: CloseupHighlight | null = null,
 ): CloseupField | null {
   const cubeList = Array.isArray(cubes) ? cubes : [cubes as Cube];
@@ -85,6 +101,9 @@ function allocateBuffers(total: number): CloseupBuffers {
     sizes:         new Float32Array(total),
     temps:         new Float32Array(total),
     seeds:         new Float32Array(total),
+    // Fully visible by default — callers dim individual stars by mutating the
+    // `aVisibility` attribute (fog of war), like they do for `aColor`/`aSize`.
+    visibility:    new Float32Array(total).fill(1),
     globalIndices: new Int32Array(total),
     names:         new Array<string>(total),
   };
@@ -98,7 +117,7 @@ function allocateBuffers(total: number): CloseupBuffers {
 function fillBuffers(
   buf: CloseupBuffers,
   cubeList: readonly Cube[],
-  galaxyData: GalaxyData,
+  galaxyData: CloseupFieldSource,
   highlight: CloseupHighlight | null,
 ): void {
   const src = galaxyData.data;
@@ -135,11 +154,13 @@ function buildPoints(buf: CloseupBuffers): CloseupField {
   geo.setAttribute('aSize',    new THREE.BufferAttribute(buf.sizes, 1));
   geo.setAttribute('aTemp',    new THREE.BufferAttribute(buf.temps, 1));
   geo.setAttribute('aSeed',    new THREE.BufferAttribute(buf.seeds, 1));
+  geo.setAttribute('aVisibility', new THREE.BufferAttribute(buf.visibility, 1));
 
   const mat = new THREE.ShaderMaterial({
     uniforms: {
       uPixelRatio: { value: getDevicePixelRatio() },
       uTime:       { value: 0 },
+      uDim:        { value: 1 },
     },
     vertexShader: STAR_VERT,
     fragmentShader: STAR_FRAG,

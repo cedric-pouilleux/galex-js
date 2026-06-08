@@ -45,7 +45,7 @@ export { disposeObject3DTree } from './view/Dispose.js';
 
 // ── Closeup primitives (sub-buffer + shader) ────────────────────
 export { prepareCloseupField } from './view/closeup/Buffers.js';
-export type { CloseupField, CloseupHighlight } from './view/closeup/Buffers.js';
+export type { CloseupField, CloseupFieldSource, CloseupHighlight } from './view/closeup/Buffers.js';
 
 export { createHoverRing } from './view/closeup/HoverRing.js';
 export type { HoverRing } from './view/closeup/HoverRing.js';
@@ -120,6 +120,7 @@ export {
   STREAK_PALETTE,
   STRETCH_FRAG,
   STRETCH_VERT,
+  createMaterialFromDef,
   createPointsMaterialDef,
   createStandardPointsUniforms,
   getDevicePixelRatio,

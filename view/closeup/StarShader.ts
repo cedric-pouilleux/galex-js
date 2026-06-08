@@ -17,9 +17,11 @@ attribute float aSize;
 attribute vec3 aColor;
 attribute float aSeed;
 attribute float aTemp;
+attribute float aVisibility;
 varying vec3 vColor;
 varying float vSeed;
 varying float vTemp;
+varying float vVis;
 varying float vSpikeMul;
 varying float vHaloMul;
 varying float vHaloTight;
@@ -31,6 +33,7 @@ void main() {
   vColor = aColor;
   vSeed  = aSeed;
   vTemp  = aTemp;
+  vVis   = aVisibility;
 
   // 5 decorrelated values in [0, 1] derived from aSeed
   float t1 = fract(aSeed * 13.71);
@@ -75,12 +78,14 @@ export const STAR_FRAG = /* glsl */`
 varying vec3 vColor;
 varying float vSeed;
 varying float vTemp;
+varying float vVis;
 varying float vSpikeMul;
 varying float vHaloMul;
 varying float vHaloTight;
 varying float vBodyTight;
 varying float vCoreMul;
 uniform float uTime;
+uniform float uDim;
 void main() {
   vec2 uv = gl_PointCoord - 0.5;
   float d = length(uv) * 2.0;
@@ -106,5 +111,9 @@ void main() {
   vec3 col = mix(vColor, vec3(1.0), pow(core / 1.3, 0.6) * 0.75);
   col += vec3(0.25, 0.45, 1.0) * hot * halo * 0.55;
 
-  gl_FragColor = vec4(col * intensity, intensity);
+  // Fog-of-war dimming: per-star aVisibility x global uDim. Modulates the
+  // additive output (colour and alpha alike) so even the forced white core
+  // fades, which aColor alone cannot do.
+  float vis = clamp(vVis, 0.0, 1.0) * uDim;
+  gl_FragColor = vec4(col * intensity * vis, intensity * vis);
 }`;

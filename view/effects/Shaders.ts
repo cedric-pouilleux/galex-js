@@ -215,6 +215,23 @@ export type ShaderMaterialDef = {
   side?: THREE.Side;
 };
 
+/**
+ * Instantiates a live `THREE.ShaderMaterial` from a {@link ShaderMaterialDef}.
+ * Spares non-Tres consumers (vanilla Three.js, custom renderers) from rewiring
+ * the constructor params by hand; `side` is only set when the def carries it.
+ */
+export function createMaterialFromDef(def: ShaderMaterialDef): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    vertexShader: def.vertexShader,
+    fragmentShader: def.fragmentShader,
+    uniforms: def.uniforms as Record<string, THREE.IUniform>,
+    transparent: def.transparent,
+    blending: def.blending,
+    depthWrite: def.depthWrite,
+    ...(def.side != null ? { side: def.side } : {}),
+  });
+}
+
 /** Standard uniforms shared by every additive Points layer (clipping plane + dim). */
 export function createStandardPointsUniforms(): Record<string, { value: unknown }> {
   return {
